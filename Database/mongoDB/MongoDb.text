@@ -274,7 +274,6 @@ nested lookup example:
     }
   },
   { $unwind: "$cust" },
-
   {
     $lookup: {
       from: "regions",
