@@ -1,0 +1,25 @@
+TOOLS & COMMANDS USED:
+npx depcheck
+React Profiler
+React Compiler
+React 19 Performance Tracks
+Vite Bundle Analyzer
+Chrome DevTools Performance Tab
+
+
+
+
+Step-1 -> Bundle Optimization
+React lazy components
+Minified Js
+Minified Css
+Code Spliting
+Remove un used NPM Packages
+SSR using tanstack
+
+
+Prebuild Thing Utilization (available in react compiler and vite)
+-> Memozation of component
+-> Caching function
+-> minifization of jss css
+-> Router Lazy Loading 

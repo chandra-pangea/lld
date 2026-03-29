@@ -388,15 +388,15 @@ db.bigCollection.aggregate([
 
 // • Multi-level joins / nested lookups: when documents reference other collections (and those further reference others). Understand the performance implications, and when embedding vs referencing makes sense.  
 
-// • Conditional aggregation / bucketing inside aggregation — using $switch / $cond / $bucket / $bucketAuto — for segmentation, categorization, histograms.  
+// • Conditional aggregation / bucketing inside aggregation — using $switch / $cond / $bucket / $bucketAuto — for segmentation, categorization, histograms.
 
 // • Faceted aggregation / dashboards — using $facet to compute multiple independent aggregations in a single pass — efficient for reporting or analytics endpoints.
 
-// • Materializing aggregated output — using $merge / $out — to build summary collections / materialized views inside MongoDB, useful in analytics-heavy applications.  
+// • Materializing aggregated output — using $merge / $out — to build summary collections / materialized views inside MongoDB, useful in analytics-heavy applications.
 
 // • Performance & resource constraints: when pipelines become heavy (joins, recursion, large data, grouping) — need proper indexing, early filtering ($match), projecting only necessary fields, possibly use allowDiskUse, understand memory limits and disk spill behaviour.  
 
-// • Schema design considerations given advanced queries: if you have frequent nested lookups or graph-like relations, sometimes embedding or denormalizing can give better performance than frequent $lookup/$graphLookup. Also consider tradeoffs (data duplication vs query performance).  
+// • Schema design considerations given advanced queries: if you have frequent nested lookups or graph-like relations, sometimes embedding or denormalizing can give better performance than frequent $lookup/$graphLookup. Also consider tradeoffs (data duplication vs query performance).
 
 // • Awareness of MongoDB version / feature support: e.g. $graphLookup, $bucketAuto, $merge — only available in certain versions; likewise behaviour of memory, sharding with $graphLookup, etc. Always check version compatibility.
 
