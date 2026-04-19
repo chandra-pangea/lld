@@ -1,17 +1,302 @@
-// ================================
-// MongoDB — Advanced Aggregation & Query Examples + Notes
-// ================================
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║              MongoDB — Complete SDE2 Interview Reference Guide             ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
 
-// === THEORY / Overview ===
-// Aggregation in MongoDB uses a _pipeline_ model: the output of one stage becomes input to the next.
-// Common pipeline stages include: $match, $project, $group, $sort, $limit, $skip, $unwind, $lookup, $bucket / $bucketAuto, $facet, $set / $addFields / $unset, $setWindowFields (from newer versions) etc.
-// Aggregation is used for analytics, reporting, data transformation, joining collections, histogram / bucketing, windowed computations, and more — especially when simple find() isn’t enough.
 
-// ================================
-// EXAMPLE AGGREGATION PIPELINES
-// ================================
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TABLE OF CONTENTS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  1.  Core Concepts & Architecture
+//  2.  Storage Engine (WiredTiger)
+//  3.  Data Modeling — Embedding vs Referencing
+//  4.  Schema Validation (NEW)
+//  5.  Index Types & Strategies
+//  6.  Covered Queries
+//  7.  TTL Indexes
+//  8.  Aggregation Pipeline — Theory & Best Practices
+//  9.  Aggregation Pipeline — Practical Examples
+//      9a.  $group + $sum/$avg + $sort + $limit
+//      9b.  $unwind + $group (array frequency)
+//      9c.  $lookup (JOIN)
+//      9d.  $facet (multi-branch analytics)
+//      9e.  $bucket / $bucketAuto (histograms)
+//      9f.  $setWindowFields (window functions, v5.0+)
+//      9g.  $unionWith (combine collections)
+//      9h.  $merge / $out (materialized views)
+//      9i.  Date extraction + grouping
+//      9j.  $graphLookup (recursive / hierarchical)
+//      9k.  $filter (array-level filtering)
+//      9l.  Nested / multi-level $lookup
+//      9m.  $switch / $cond (conditional logic)
+//      9n.  $facet — full dashboard example
+// 10.  Replica Sets & High Availability
+// 11.  Sharding & Horizontal Scaling
+// 12.  Transactions (Multi-Document ACID)
+// 13.  Read Concern / Write Concern / Read Preference (NEW)
+// 14.  Change Streams (NEW)
+// 15.  Oplog (NEW)
+// 16.  Capped Collections
+// 17.  Connection Pooling & Cursor Batching (NEW)
+// 18.  Security Best Practices
+// 19.  Backup & Restore
+// 20.  Atlas Search & Full-Text Search (NEW)
+// 21.  When MongoDB Is NOT a Good Fit
+// 22.  MongoDB vs SQL — Data Modeling Comparison
+// 23.  Performance Tuning Checklist (NEW)
+// 24.  Common SDE2 Interview Questions & Answers (NEW)
+// 25.  Sample Schema for Practice
 
-1. Group + sum/avg + sort + limit — e.g. top customers or products by total amount
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 1. CORE CONCEPTS & ARCHITECTURE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// • MongoDB is a document-oriented NoSQL database that stores data in BSON
+//   (Binary JSON) documents inside collections (analogous to tables).
+// • Schema-less by default — each document in a collection can have different
+//   fields (though schema validation can be enforced).
+// • Designed for horizontal scalability (sharding), high availability (replica
+//   sets), and flexible schema evolution.
+// • Default port: 27017.
+// • Key terminology mapping:
+//     SQL            →  MongoDB
+//     ─────────────────────────────────
+//     Database       →  Database
+//     Table          →  Collection
+//     Row            →  Document
+//     Column         →  Field
+//     JOIN           →  $lookup / embedding
+//     PRIMARY KEY    →  _id (auto-generated ObjectId)
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 2. STORAGE ENGINE — WiredTiger
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem:
+//   Old storage engine (MMAPv1) had collection-level locking, high memory
+//   usage, and no compression → slow under concurrent workloads.
+
+// ✅ Solution — WiredTiger (default since MongoDB 3.2):
+//   • Document-level concurrency control → multiple writes without blocking
+//   • Snappy/zlib/zstd compression → significant disk savings
+//   • Write-Ahead Logging (journaling) → crash recovery, prevents data loss
+//   • Internal page cache + OS filesystem cache → efficient memory usage
+
+// 📌 Example:
+//   Two users updating *different* documents in the same collection proceed
+//   concurrently without blocking each other.
+
+// ⚠️ When it matters:
+//   • Write-heavy applications
+//   • Multi-user / multi-threaded environments
+//   • Large datasets where compression saves significant disk cost
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 3. DATA MODELING — EMBEDDING vs REFERENCING
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: How should you store related data — together or separately?
+
+// ── Option A: Embedding (Denormalization) ──
+// Store child data inside the parent document.
+
+// Example:
+{
+  name: "John",
+  orders: [
+    { id: 1, amount: 100, date: "2025-01-15" },
+    { id: 2, amount: 250, date: "2025-03-20" }
+  ]
+}
+
+// ✅ Pros:
+//   • Fast reads — single query fetches everything
+//   • Atomic updates on a single document
+//   • No need for $lookup
+// ❌ Cons:
+//   • Document bloat — 16MB max document size limit
+//   • Data duplication if the embedded entity is shared
+//   • Updates to nested arrays can become complex
+
+// ── Option B: Referencing (Normalization) ──
+// Store data in separate collections with foreign key references.
+
+// Example:
+// users collection:  { _id: 1, name: "John" }
+// orders collection: { _id: 101, userId: 1, amount: 100 }
+
+// ✅ Pros:
+//   • Cleaner for large / shared / frequently-updated child data
+//   • Avoids document bloat
+// ❌ Cons:
+//   • Requires $lookup (JOIN) → more latency
+//   • Multiple round-trips for related data
+
+// ── Decision Guide ──
+// Embed when:   1:1 or 1:few, data always read together, low update frequency
+// Reference when: 1:many or many:many, data >16MB, child shared across parents
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 4. SCHEMA VALIDATION (SDE2 — often missed!)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// MongoDB supports JSON Schema validation on collections to enforce structure.
+
+// Creating a collection with validation:
+db.createCollection("users", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["name", "email", "age"],
+      properties: {
+        name:  { bsonType: "string", description: "must be a string" },
+        email: { bsonType: "string", pattern: "^.+@.+$" },
+        age:   { bsonType: "int", minimum: 0, maximum: 150 }
+      }
+    }
+  },
+  validationLevel: "strict",    // "strict" (default) | "moderate"
+  validationAction: "error"     // "error" (default) | "warn"
+});
+
+// validationLevel:
+//   "strict"   → all inserts AND updates must pass validation
+//   "moderate" → existing invalid docs are left alone; new inserts must pass
+
+// validationAction:
+//   "error" → rejects invalid documents
+//   "warn"  → allows but logs a warning
+
+// 📌 Why it matters for SDE2:
+//   Shows you understand data integrity even in schema-flexible databases.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 5. INDEX TYPES & STRATEGIES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: Slow queries scanning millions of documents.
+// ✅ Solution: Indexes reduce scanned documents dramatically.
+
+// ── Index Types ──
+// 1. Single-field:    db.users.createIndex({ email: 1 })
+// 2. Compound:        db.users.createIndex({ status: 1, createdAt: -1 })
+// 3. Multikey:        Automatically created when field is an array
+// 4. Text:            db.articles.createIndex({ body: "text" })
+// 5. Geospatial:      db.places.createIndex({ location: "2dsphere" })
+// 6. Hashed:          db.users.createIndex({ email: "hashed" })  // for sharding
+// 7. TTL:             See Section 7
+// 8. Wildcard:        db.logs.createIndex({ "$**": 1 })  // indexes all fields
+// 9. Partial:         db.orders.createIndex(
+//                       { amount: 1 },
+//                       { partialFilterExpression: { status: "active" } }
+//                     )
+// 10. Unique:         db.users.createIndex({ email: 1 }, { unique: true })
+// 11. Sparse:         db.users.createIndex({ phone: 1 }, { sparse: true })
+//                     // only indexes docs where the field exists
+
+// ── Compound Index Ordering (ESR Rule) ──
+// For optimal compound indexes, order fields as:
+//   E — Equality   (fields used with exact match)
+//   S — Sort       (fields used in sort)
+//   R — Range      (fields used with $gt, $lt, $in, etc.)
+
+// ── Key Considerations ──
+// • Indexes speed up reads but slow down writes (each insert/update must
+//   update all relevant indexes).
+// • Use explain() to verify index usage:
+//   db.orders.find({ status: "active" }).explain("executionStats")
+// • Watch for COLLSCAN (no index) vs IXSCAN (index used) in explain output.
+// • Monitor index size — indexes consume RAM. If indexes exceed RAM, performance
+//   degrades significantly.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 6. COVERED QUERIES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: MongoDB fetches documents from disk → slower.
+// ✅ Solution: If both query filter AND projection use only indexed fields,
+//   MongoDB answers entirely from the index → no disk fetch → very fast.
+
+// 📌 Example:
+// Index: { name: 1, age: 1 }
+// Query: db.users.find({ name: "John" }, { age: 1, _id: 0 })
+// Covered! All fields are in the index. Note: must exclude _id if not indexed.
+
+// Verify with explain():
+//   "totalDocsExamined": 0  → means query was covered
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 7. TTL INDEXES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: Sessions, tokens, temp data, old logs need automatic expiry.
+// ✅ Solution: TTL index auto-deletes documents after specified seconds.
+
+db.sessions.createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+// → Deletes documents 1 hour after their `createdAt` timestamp.
+
+// Notes:
+// • Only works on fields with Date type values.
+// • MongoDB runs a background thread every 60 seconds to check & delete.
+// • Cannot be a compound index.
+// • Deletion is not instantaneous — there can be up to ~60-second delay.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 8. AGGREGATION PIPELINE — THEORY & BEST PRACTICES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// The aggregation framework uses a pipeline model:
+//   Input → Stage 1 → Stage 2 → ... → Output
+// Each stage transforms the data and passes results to the next.
+
+// ── Common Pipeline Stages ──
+// $match      → filter documents (like WHERE)
+// $project    → select/reshape fields (like SELECT)
+// $group      → aggregate by key (like GROUP BY)
+// $sort       → order results (like ORDER BY)
+// $limit      → cap result count (like LIMIT)
+// $skip       → offset results (like OFFSET)
+// $unwind     → flatten array field into individual documents
+// $lookup     → join with another collection (like JOIN)
+// $addFields  → add computed fields (alias: $set)
+// $unset      → remove fields
+// $count      → count documents
+// $bucket     → manual histogram bucketing
+// $bucketAuto → automatic histogram bucketing
+// $facet      → run multiple sub-pipelines in parallel
+// $graphLookup → recursive/graph traversal
+// $setWindowFields → window functions (v5.0+)
+// $merge      → write output to a collection (upsert-capable)
+// $out        → write output to a collection (replaces entire collection)
+// $unionWith  → combine with another collection
+// $replaceRoot → replace document with a sub-document
+// $sample     → randomly select N documents
+// $redact     → field-level access control within documents
+
+// ── Best Practices ──
+// 1. Place $match EARLY to reduce documents processed in later stages.
+// 2. Use $project early to drop unnecessary fields → less memory.
+// 3. Ensure $match stages can use indexes (especially the first $match).
+// 4. Use { allowDiskUse: true } for memory-intensive pipelines (>100MB limit).
+// 5. Avoid unnecessary $unwind — it multiplies documents.
+// 6. Use $lookup sparingly on large collections — consider denormalization.
+// 7. Profile pipelines with .explain("executionStats").
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 9. AGGREGATION PIPELINE — PRACTICAL EXAMPLES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── 9a. $group + $sum/$avg + $sort + $limit ──
+// Use case: Top 10 customers by total spending
+
 db.orders.aggregate([
   { $match: { status: "completed", orderDate: { $gte: ISODate("2025-01-01") } } },
   { $group: {
@@ -25,19 +310,21 @@ db.orders.aggregate([
   { $limit: 10 }
 ]);
 
-2. Unwind an array field + group — e.g. count frequency of array items across documents
+
+// ── 9b. $unwind + $group (array frequency) ──
+// Use case: Top 5 most popular "likes" across all users
+
 db.users.aggregate([
   { $unwind: "$likes" },
-  { $group: {
-      _id: "$likes",
-      count: { $sum: 1 }
-    }
-  },
+  { $group: { _id: "$likes", count: { $sum: 1 } } },
   { $sort: { count: -1 } },
   { $limit: 5 }
 ]);
 
-3. Join (lookup) + project — for merging data from two collections (like SQL JOIN)
+
+// ── 9c. $lookup (JOIN) ──
+// Use case: Enrich orders with product details
+
 db.orders.aggregate([
   { $match: { status: "completed" } },
   { $lookup: {
@@ -58,149 +345,146 @@ db.orders.aggregate([
   }
 ]);
 
-4. Multi-branch aggregation using $facet — compute several independent aggregates in one query
+
+// ── 9d. $facet (multi-branch analytics) ──
+// Use case: Get multiple stats in a single query
+
 db.orders.aggregate([
   { $facet: {
-      totalOrders: [ { $count: "count" } ],
-      completedOrders: [ { $match: { status: "completed" } }, { $count: "count" } ],
-      averageAmount: [ { $group: { _id: null, avgAmount: { $avg: "$amount" } } } ]
+      totalOrders:     [{ $count: "count" }],
+      completedOrders: [{ $match: { status: "completed" } }, { $count: "count" }],
+      averageAmount:   [{ $group: { _id: null, avgAmount: { $avg: "$amount" } } }]
     }
   }
 ]);
 
-5. Bucketing / histogram — group numeric or date fields into ranges (manual buckets)
+
+// ── 9e. $bucket / $bucketAuto (histograms) ──
+// Use case: Age distribution of customers
+
+// Manual boundaries:
 db.customers.aggregate([
   { $bucket: {
       groupBy: "$age",
       boundaries: [18, 25, 35, 50, 65],
       default: "65+",
-      output: {
-        count: { $sum: 1 },
-        avgSpending: { $avg: "$spending" }
-      }
+      output: { count: { $sum: 1 }, avgSpending: { $avg: "$spending" } }
     }
   }
 ]);
 
-6. Automatic bucketing using $bucketAuto — Mongo computes buckets for you based on distribution
+// Automatic bucketing (Mongo decides boundaries):
 db.sales.aggregate([
   { $bucketAuto: {
       groupBy: "$amount",
       buckets: 5,
-      output: {
-         count: { $sum: 1 },
-         totalSales: { $sum: "$amount" }
-      }
+      output: { count: { $sum: 1 }, totalSales: { $sum: "$amount" } }
     }
   }
 ]);
 
-7. Window functions (on MongoDB ≥ 5.0) — e.g. running totals, moving averages per partition/sort key
+
+// ── 9f. $setWindowFields (window functions, MongoDB 5.0+) ──
+// Use case: Running total & moving average per product
+
 db.sales.aggregate([
   { $sort: { date: 1 } },
   { $setWindowFields: {
       partitionBy: "$productId",
       sortBy: { date: 1 },
       output: {
-        cumulativeSales: { $sum: "$quantity", window: { documents: ["unbounded", "current"] } },
-        avgLast3: { $avg: "$quantity", window: { documents: [-2, "current"] } }
+        cumulativeSales: {
+          $sum: "$quantity",
+          window: { documents: ["unbounded", "current"] }
+        },
+        avgLast3: {
+          $avg: "$quantity",
+          window: { documents: [-2, "current"] }
+        },
+        rank: {
+          $rank: {}     // rank within partition
+        }
       }
     }
   }
 ]);
 
-8. Combine multiple collections using $unionWith — e.g. unify records from two collections and then aggregate
-db.collection1.aggregate([
-  /* some pipeline on collection1 */
-  { $unionWith: "collection2" },
-  /* further pipeline on combined results */
+
+// ── 9g. $unionWith (combine collections) ──
+// Use case: Merge and aggregate data from two collections
+
+db.onlineOrders.aggregate([
+  { $unionWith: "storeOrders" },
   { $match: { status: "active" } },
   { $group: { _id: "$category", count: { $sum: 1 } } }
 ]);
 
-9. Persist aggregated results into another collection — using $merge or $out (materialized view / summary collection)
-db.orders.aggregate([
-  { $group: { _id: "$status", totalAmount: { $sum: "$amount" } } },
-  { $merge: { into: "orderSummary", whenMatched: "merge", whenNotMatched: "insert" } }
-]);
 
-10. Example: Monthly sales totals (by extracting month from date field + grouping)
+// ── 9h. $merge / $out (materialized views) ──
+// Use case: Persist aggregated results into a summary collection
+
 db.sales.aggregate([
-  { $addFields: { month: { $month: "$date" } } },
-  { $group: { _id: "$month", total: { $sum: "$amount" } } },
-  { $sort: { _id: 1 } }
+  { $group: {
+      _id: "$productId",
+      totalQty: { $sum: "$quantity" },
+      totalAmount: { $sum: "$amount" }
+    }
+  },
+  { $merge: {
+      into: "productSalesSummary",
+      whenMatched: "merge",       // merge with existing doc
+      whenNotMatched: "insert"    // insert if not found
+    }
+  }
 ]);
 
-// ================================
-// NOTES / BEST PRACTICES / CONSIDERATIONS
-// ================================
-// - Always try to $match (filter) early in the pipeline to reduce number of documents processed downstream.
-// - Use projection ($project / $addFields / $unset) to limit fields you carry forward — reduces memory usage.
-// - For large data sets or memory-intensive pipelines, consider using option { allowDiskUse: true } in .aggregate() to allow disk spill.
-// - Use $lookup judiciously; joining large collections may be expensive. Sometimes embedding or precomputed data / denormalization might be better depending on access patterns. (Design tradeoffs apply).
-// - For complex reporting (multiple aggregates like counts, sums, histograms in single query), $facet + $bucket / $bucketAuto is powerful.
-// - If you need time-series or running totals / moving averages, use newer window-stage operators (e.g. $setWindowFields) where MongoDB version supports them.
+// $out replaces the ENTIRE target collection:
+// { $out: "productSalesSummarySnapshot" }
+// Use $merge for incremental updates, $out for full replacement.
 
 
-// ================================
-// SAMPLE SCHEMA & DATA (for testing some of above queries) — you can adapt to your collections
-/*
-use shopDB;
+// ── 9i. Date extraction + grouping ──
+// Use case: Monthly sales totals
 
-db.customers.insertMany([
-  { _id: 1, name: "Alice", age: 30, spending: 1200 },
-  { _id: 2, name: "Bob",   age: 22, spending: 800 },
-  { _id: 3, name: "Charlie", age: 40, spending: 1500 },
-  // ... more docs
+db.sales.aggregate([
+  { $addFields: {
+      year:  { $year: "$date" },
+      month: { $month: "$date" }
+    }
+  },
+  { $group: {
+      _id: { year: "$year", month: "$month" },
+      total: { $sum: "$amount" }
+    }
+  },
+  { $sort: { "_id.year": 1, "_id.month": 1 } }
 ]);
 
-db.orders.insertMany([
-  { _id: 101, customerId: 1, amount: 300, status: "completed", orderDate: ISODate("2025-02-10") },
-  { _id: 102, customerId: 2, amount: 450, status: "pending",   orderDate: ISODate("2025-03-01") },
-  { _id: 103, customerId: 1, amount: 700, status: "completed", orderDate: ISODate("2025-04-15") },
-  // ... more orders
-]);
 
-db.sales.insertMany([
-  { _id: 201, productId: "P1", date: ISODate("2025-01-05"), amount: 200, quantity: 2 },
-  { _id: 202, productId: "P1", date: ISODate("2025-01-15"), amount: 300, quantity: 3 },
-  { _id: 203, productId: "P2", date: ISODate("2025-02-10"), amount: 500, quantity: 5 },
-  // ... more sales data
-]);
-*/
+// ── 9j. $graphLookup (recursive/hierarchical data) ──
+// Use case: Find entire management chain for each employee
 
-
-
-
-
-// ================================
-// MongoDB — More Advanced Aggregation & Query Examples + Notes
-// (extensions: recursive lookup, array-filtering, nested lookups, conditional logic, materialization, etc.)
-// ================================
-
-// === More Advanced / Less-common Aggregation Stages & Use-Cases ===
-
-1. Recursive / Graph-style lookup within a collection (hierarchies / tree / graph data) — using $graphLookup
 db.employees.aggregate([
-  {
-    $graphLookup: {
+  { $graphLookup: {
       from: "employees",
       startWith: "$managerId",
       connectFromField: "managerId",
       connectToField: "_id",
       as: "managementChain",
-      maxDepth: 5,                // optional: limit recursion depth
-      depthField: "level"         // optional: track how far the node is from start
+      maxDepth: 5,                // optional: limit recursion
+      depthField: "level"         // optional: distance from start node
     }
   }
 ]);
 
-// e.g. output: each employee doc gets a field “managementChain” as an array of all their managers / ancestors.
+// Output: Each employee gets a "managementChain" array of all ancestor nodes.
+// Use cases: Org charts, category trees, social graphs, dependency trees.
 
-2. Filtering or manipulating array-fields inside documents (e.g. selecting subset of array elements) + aggregation
 
-// Suppose a doc structure: { _id, name, scores: [ { subject: "math", score: 80 }, { subject: "eng", score: 65 }, ... ] }
-// We can compute average for only certain subjects (e.g. where score > 70):
+// ── 9k. $filter (array-level filtering inside documents) ──
+// Use case: Avg of only "high" scores (>70) per student
+
+// Schema: { _id, name, scores: [{ subject: "math", score: 80 }, ...] }
 
 db.students.aggregate([
   { $project: {
@@ -222,29 +506,16 @@ db.students.aggregate([
   }
 ]);
 
-// This gives, per student, the average of only “high” scores. (You can adapt the condition.)  
-// This pattern helps when you need array-level filtering + aggregation.  
 
-3. Nested / multi-level lookups (join across multiple collections, then aggregate)  
-// Example: Suppose we have collection “orders” referencing “customers”, and each customer references “region”. Want to get, per region, total sales.
+// ── 9l. Nested / multi-level $lookup ──
+// Use case: Total sales per region (orders → customers → regions)
 
+// Simple chained lookup:
 db.orders.aggregate([
   { $match: { status: "completed" } },
-  { $lookup: {
-      from: "customers",
-      localField: "customerId",
-      foreignField: "_id",
-      as: "cust"
-    }
-  },
+  { $lookup: { from: "customers", localField: "customerId", foreignField: "_id", as: "cust" } },
   { $unwind: "$cust" },
-  { $lookup: {
-      from: "regions",
-      localField: "cust.regionId",
-      foreignField: "_id",
-      as: "region"
-    }
-  },
+  { $lookup: { from: "regions", localField: "cust.regionId", foreignField: "_id", as: "region" } },
   { $unwind: "$region" },
   { $group: {
       _id: "$region.name",
@@ -255,47 +526,33 @@ db.orders.aggregate([
   { $sort: { totalSales: -1 } }
 ]);
 
-
-
-nested lookup example:
-[
-  {
-    $lookup: {
+// Sub-pipeline lookup (more flexible, supports filtering inside the join):
+db.orders.aggregate([
+  { $lookup: {
       from: "customers",
-      let: { custId: "$customerId" },        // pass value into sub-pipeline
+      let: { custId: "$customerId" },
       pipeline: [
-        {
-          $match: {
-            $expr: { $eq: ["$_id", "$$custId"] }
+        { $match: { $expr: { $eq: ["$_id", "$$custId"] } } },
+        { $lookup: {
+            from: "regions",
+            let: { regionId: "$regionId" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$regionId"] } } }
+            ],
+            as: "region"
           }
-        }
+        },
+        { $unwind: "$region" }
       ],
       as: "cust"
     }
   },
-  { $unwind: "$cust" },
-  {
-    $lookup: {
-      from: "regions",
-      let: { regionId: "$cust.regionId" },   // pass nested field  
-      pipeline: [
-        {
-          $match: {
-            $expr: { $eq: ["$_id", "$$regionId"] }
-          }
-        }
-      ],
-      as: "region"
-    }
-  },
-  { $unwind: "$region" }
-]
+  { $unwind: "$cust" }
+]);
 
 
-// This gives per-region aggregated sales — demonstrates chaining lookups + group.  
-
-4. Conditional logic inside aggregation — e.g. categorize data, compute conditional sums / counts  
-// Suppose you have orders with an amount field, and you want to bucket into “small”, “medium”, “large” orders, then count each category:
+// ── 9m. $switch / $cond (conditional logic) ──
+// Use case: Categorize orders into size buckets, then aggregate
 
 db.orders.aggregate([
   { $project: {
@@ -304,8 +561,8 @@ db.orders.aggregate([
         $switch: {
           branches: [
             { case: { $lte: ["$amount", 100] }, then: "small" },
-            { case: { $and: [ { $gt: ["$amount", 100] }, { $lte: ["$amount", 500] } ] }, then: "medium" },
-            { case: { $gt: ["$amount", 500] }, then: "large" }
+            { case: { $lte: ["$amount", 500] }, then: "medium" },
+            { case: { $gt:  ["$amount", 500] }, then: "large" }
           ],
           default: "unknown"
         }
@@ -320,9 +577,12 @@ db.orders.aggregate([
   }
 ]);
 
-// This lets you categorize and aggregate in one pipeline — useful for quick reports / segmentation.  
+// $cond (ternary) example:
+// { $cond: { if: { $gte: ["$amount", 500] }, then: "premium", else: "standard" } }
 
-5. Combining multiple analytics: e.g. count, sum, average, distinct values — using $facet + $group + $addToSet  
+
+// ── 9n. $facet — full dashboard example ──
+// Use case: Return multiple analytics in a single query
 
 db.orders.aggregate([
   { $facet: {
@@ -332,19 +592,16 @@ db.orders.aggregate([
       avgOrder: [
         { $group: { _id: null, avgAmount: { $avg: "$amount" } } }
       ],
-      customers: [
+      distinctCustomers: [
         { $group: { _id: "$customerId" } },
-        { $count: "distinctCustomerCount" }
+        { $count: "count" }
       ],
-      bucketedByAmount: [
+      byAmountBucket: [
         { $bucket: {
             groupBy: "$amount",
             boundaries: [0, 100, 500, 1000, 5000],
             default: "5000+",
-            output: {
-              count: { $sum: 1 },
-              total: { $sum: "$amount" }
-            }
+            output: { count: { $sum: 1 }, total: { $sum: "$amount" } }
           }
         }
       ]
@@ -352,505 +609,530 @@ db.orders.aggregate([
   }
 ]);
 
-// This returns a document having multiple analytics (summary, avg, distinct count, bucket-histogram) — very useful for dashboards / reporting.  
 
-6. Materializing aggregated results into another collection — using $merge (or $out) — useful for reports / summary tables / caching  
-
-db.sales.aggregate([
-  { $group: { _id: "$productId", totalQty: { $sum: "$quantity" }, totalAmount: { $sum: "$amount" } } },
-  { $merge: {
-      into: "productSalesSummary",
-      whenMatched: "merge",        // merge with existing doc if present
-      whenNotMatched: "insert"     // insert new doc if not exist
-    }
-  }
-]);
-
-// Now “productSalesSummary” has one doc per productId with aggregated totals — can be used for fast lookups later.  
-
-7. Handling large data sets — using allowDiskUse, early $match, limiting fields  
-
-db.bigCollection.aggregate([
-  { $match: { status: "active", createdAt: { $gte: ISODate("2025-01-01") } } },
-  { $project: { field1: 1, field2: 1 /* only necessary fields */ } },
-  { /* further heavy operations like $group / $lookup / $sort */ }
-], { allowDiskUse: true });
-
-// Setting allowDiskUse helps avoid memory errors / limit issues on big pipelines.  
-
-// ================================
-// Extended Theory / Interview-level Concepts & Edge Cases to Know
-// ================================
-
-// • Recursive / graph-structured data traversal: using $graphLookup — for organizational charts, hierarchies, tree- or graph-like data structures. Understand parameters like startWith, connectFromField/connectToField, maxDepth, depthField, and memory/disk usage constraints. :contentReference[oaicite:2]{index=2}
-
-// • Array-filtering + aggregation: using $filter, $unwind + $group — when documents have embedded arrays and you need to filter & aggregate based on array contents. Useful for scores, tags, history arrays, etc.  
-
-// • Multi-level joins / nested lookups: when documents reference other collections (and those further reference others). Understand the performance implications, and when embedding vs referencing makes sense.  
-
-// • Conditional aggregation / bucketing inside aggregation — using $switch / $cond / $bucket / $bucketAuto — for segmentation, categorization, histograms.
-
-// • Faceted aggregation / dashboards — using $facet to compute multiple independent aggregations in a single pass — efficient for reporting or analytics endpoints.
-
-// • Materializing aggregated output — using $merge / $out — to build summary collections / materialized views inside MongoDB, useful in analytics-heavy applications.
-
-// • Performance & resource constraints: when pipelines become heavy (joins, recursion, large data, grouping) — need proper indexing, early filtering ($match), projecting only necessary fields, possibly use allowDiskUse, understand memory limits and disk spill behaviour.  
-
-// • Schema design considerations given advanced queries: if you have frequent nested lookups or graph-like relations, sometimes embedding or denormalizing can give better performance than frequent $lookup/$graphLookup. Also consider tradeoffs (data duplication vs query performance).
-
-// • Awareness of MongoDB version / feature support: e.g. $graphLookup, $bucketAuto, $merge — only available in certain versions; likewise behaviour of memory, sharding with $graphLookup, etc. Always check version compatibility.
-
-
-✅ MongoDB Advanced Concepts — Problem & Solution Based Understanding
-1. Replica Set (High Availability)
-❗ Problem
-
-What happens if your database server suddenly goes down?
-
-Your app cannot read/write.
-
-Users face downtime.
-
-Possible data loss if the server crashes.
-
-✅ MongoDB Solution — Replica Set
-
-MongoDB keeps multiple copies of your data on different servers.
-
-Primary = handles writes
-
-Secondaries = copy data from primary
-
-Arbiter = votes during elections but stores no data
-
-If the primary fails:
-
-A secondary becomes new primary automatically
-
-No manual restart required → high availability
-
-📌 Simple Example
-Primary goes down → Election happens → Secondary becomes Primary → App continues
-
-⚠️ Trade-offs
-
-Reads from secondary may show old data (eventual consistency).
-
-Replication lag during heavy writes.
-
-2. Sharding (Horizontal Scaling)
-❗ Problem
-
-What if:
-
-Your data is too large for a single machine?
-
-Traffic is too high?
-
-Reads/writes become slow?
-
-A single MongoDB server won’t handle it.
-
-✅ MongoDB Solution — Sharding
-
-MongoDB splits your data across multiple servers using a shard key.
-
-Example:
-
-Users with id 1–1000 → shard 1
-Users with id 1001–2000 → shard 2
-
-Components
-
-Shards → actual data
-
-Config servers → metadata
-
-mongos router → routes queries to correct shard
-
-📌 Example
-
-If you search for user with id = 1500,
-mongos knows it belongs to Shard 2 only → fast.
-
-⚠️ Trade-offs
-
-Hard to change shard key later.
-
-Bad shard key → "hot shard" (all writes go to same shard).
-
-Increased operational complexity.
-
-3. Storage Engines (WiredTiger)
-❗ Problem
-
-Old storage engines (like MMAPv1) had:
-
-High locking (collection-level)
-
-High memory usage
-
-No compression
-
-This caused slow performance.
-
-✅ MongoDB Solution — WiredTiger
-
-WiredTiger provides:
-
-Document-level concurrency → multiple writes at same time
-
-Compression → saves disk
-
-Journaling → prevents data loss
-
-📌 Example
-
-Two users updating different documents can do so without blocking each other.
-
-⚠️ When it matters
-
-Write-heavy apps
-
-Multi-user environments
-
-Large datasets
-
-4. Transactions (ACID)
-❗ Problem
-
-What if you need:
-
-Multiple writes to succeed together
-
-Or fail together?
-
-Example:
-
-Transfer money: deduct from A, add to B.
-
-
-Both must succeed or fail.
-
-MongoDB originally only allowed single-document atomicity.
-
-✅ MongoDB Solution — Multi-document Transactions
-
-Since v4.0, MongoDB supports:
-
-ACID guarantees
-
-Multi-document transactions
-
-Transactions in sharded clusters
-
-📌 Example
+// ══════════════════════════════════════════════════════════════════════════════
+// 10. REPLICA SETS & HIGH AVAILABILITY
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem:
+//   Single server goes down → app cannot read/write → downtime & data loss.
+
+// ✅ Solution — Replica Set:
+//   MongoDB maintains multiple copies of data across servers.
+//
+//   • Primary   → handles ALL writes (and reads by default)
+//   • Secondary → replicates data from primary (asynchronous by default)
+//   • Arbiter   → participates in elections but stores NO data
+//
+//   If primary fails:
+//     1. Heartbeat failure detected (every 2 seconds)
+//     2. Election triggered among secondaries
+//     3. A secondary is promoted to new primary
+//     4. App reconnects automatically (with proper driver config)
+//
+//   Minimum recommended: 3 members (or 2 data + 1 arbiter)
+
+// ⚠️ Trade-offs:
+//   • Reads from secondaries may return stale data (eventual consistency)
+//   • Replication lag during heavy write loads
+//   • Write availability lost during election (~10-30 seconds)
+//   • Network partitions can cause split-brain (mitigated by majority voting)
+
+// 📌 Key for interviews:
+//   • Election requires a MAJORITY of voting members
+//   • Priority settings control which node becomes primary
+//   • Hidden members: replicate data but invisible to app (for analytics/backup)
+//   • Delayed members: replicate with a time lag (protection against mistakes)
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 11. SHARDING & HORIZONTAL SCALING
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem:
+//   Data too large for one server, traffic too high, single node bottleneck.
+
+// ✅ Solution — Sharding:
+//   MongoDB distributes data across multiple servers using a shard key.
+//
+//   Architecture:
+//   ┌──────────┐      ┌──────────────────┐      ┌──────────┐
+//   │  mongos   │─────▶│  Config Servers   │      │  Shard 1 │
+//   │ (router)  │      │  (metadata, chunk │      │ (RS)     │
+//   └──────────┘      │   mapping)        │      ├──────────┤
+//        │             └──────────────────┘      │  Shard 2 │
+//        │                                        │ (RS)     │
+//        └─ routes queries to correct shard ─────▶├──────────┤
+//                                                 │  Shard N │
+//                                                 └──────────┘
+//
+//   Each shard is itself a replica set for high availability.
+
+// ── Shard Key Selection (CRITICAL for SDE2) ──
+//   • Determines how data is distributed across shards
+//   • CANNOT be changed after sharding is enabled (choose wisely!)
+//   • Good shard key properties:
+//       - High cardinality (many distinct values)
+//       - Even distribution (avoids "hot shards")
+//       - Query isolation (queries target single shard when possible)
+//   • Bad shard key examples:
+//       - Boolean field → only 2 shards used
+//       - Monotonically increasing (like _id) → all writes hit last shard
+//   • Hashed shard key: even distribution but loses range query efficiency
+//   • Compound shard key: combines fields for better distribution
+
+// ── Chunk Balancing ──
+//   • Data is split into chunks (~128MB default)
+//   • Balancer process migrates chunks between shards to maintain balance
+//   • Jumbo chunks (too large to split) can cause imbalance
+
+// ⚠️ Trade-offs:
+//   • Hard to change shard key later
+//   • Cross-shard queries (scatter-gather) are slower
+//   • Significant operational complexity
+//   • Each shard should be a replica set → more servers needed
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 12. TRANSACTIONS (MULTI-DOCUMENT ACID)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem:
+//   Multiple writes must succeed or fail together.
+//   Example: Transfer ₹500 from Account A to Account B.
+
+// ✅ Solution — Multi-document Transactions (since MongoDB 4.0):
+//   Provides full ACID guarantees across multiple documents & collections.
+
+const session = client.startSession();
 session.startTransaction();
-// deduct from A
-// add to B
-session.commitTransaction();
-
-⚠️ Trade-offs
-
-Slower performance
-
-More memory overhead
-
-Should be used only when necessary
-
-Usually better to embed data and avoid transactions.
-
-5. Aggregation Pipeline
-❗ Problem
-
-Simple queries cannot:
-
-Group data
-
-Calculate sums/averages
-
-Transform documents
-
-Do analytics
-
-✅ MongoDB Solution — Aggregation Pipeline
-
-Think of it like a data processing pipeline:
-
-match → group → project → sort → limit
-
-📌 Example
-
-Find total sales per product:
-
-[
-  { $group: { _id: "$product", total: { $sum: "$amount" } } }
-]
-
-⚠️ Trade-offs
-
-Uses more memory
-
-May require allowDiskUse
-
-Slow without indexes
-
-6. Capped Collections
-❗ Problem
-
-Logs grow forever → disk fills up.
-
-✅ MongoDB Solution — Capped Collections
-
-A capped collection:
-
-Has fixed size
-
-Overwrites oldest data
-
-Preserves insertion order
-
-📌 Example
-
-A 1GB capped log collection will always stay 1GB.
-
-Use cases
-
-Logs
-
-Events
-
-Real-time data streams
-
-7. Covered Query
-❗ Problem
-
-MongoDB normally reads the document from disk → slower.
-
-What if we could answer a query using only the index?
-✅ MongoDB Solution — Covered Query
-
-If:
-
-Query uses indexed fields
-
-Projection uses indexed fields
-
-MongoDB does not need to fetch document → super fast.
-
-📌 Example
-
-Index:
-
-{ name: 1, age: 1 }
-
-
-Query:
-
-find({ name: "John" }, { age: 1 })
-
-
-All fields are in index → covered.
-
-8. Embedding vs Referencing
-❗ Problem
-
-How should you store related data?
-
-Together?
-
-Or separately?
-
-Option 1: Embedding
-
-Store child data inside parent document.
-
-📌 Example
-{
-  name: "John",
-  orders: [{ id: 1, amount: 100 }]
+try {
+  db.accounts.updateOne({ _id: "A" }, { $inc: { balance: -500 } }, { session });
+  db.accounts.updateOne({ _id: "B" }, { $inc: { balance: +500 } }, { session });
+  session.commitTransaction();
+} catch (error) {
+  session.abortTransaction();
+  throw error;
+} finally {
+  session.endSession();
 }
 
-Pros
+// ── ACID Breakdown ──
+// A — Atomicity:    All operations succeed or all are rolled back
+// C — Consistency:  Data remains valid after transaction
+// I — Isolation:    Concurrent transactions don't interfere (snapshot isolation)
+// D — Durability:   Committed data survives crashes (with w:"majority")
+
+// ⚠️ Trade-offs:
+//   • Performance overhead (locking, snapshot maintenance)
+//   • Default 60-second timeout for transactions
+//   • Transactions across shards (v4.2+) are even more expensive
+//   • Best practice: design schema to minimize need for transactions
+//     (prefer embedding over referencing when possible)
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 13. READ CONCERN / WRITE CONCERN / READ PREFERENCE (SDE2 must-know)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Write Concern ──
+// Controls acknowledgment level for write operations.
+//   w: 0           → fire-and-forget (no ack)
+//   w: 1           → ack from primary only (default)
+//   w: "majority"  → ack from majority of replica set members
+//   j: true        → ack only after journal flush (durable)
+
+db.orders.insertOne(
+  { amount: 100 },
+  { writeConcern: { w: "majority", j: true, wtimeout: 5000 } }
+);
+
+// ── Read Concern ──
+// Controls consistency/isolation of read data.
+//   "local"        → returns most recent data on queried node (default)
+//   "majority"     → returns data acknowledged by majority (no dirty reads)
+//   "linearizable" → strongest: reflects all successful majority writes
+//   "snapshot"     → used in multi-document transactions
+
+// ── Read Preference ──
+// Controls which replica set member to read from.
+//   "primary"             → reads only from primary (default, strongest consistency)
+//   "primaryPreferred"    → primary if available, else secondary
+//   "secondary"           → reads from secondary (eventual consistency)
+//   "secondaryPreferred"  → secondary if available, else primary
+//   "nearest"             → lowest network latency node
+
+// 📌 SDE2 Scenario:
+//   "I need strong consistency for financial reads":
+//     → readPreference: "primary", readConcern: "majority"
+//   "I need low-latency analytics that can tolerate stale data":
+//     → readPreference: "secondary", readConcern: "local"
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 14. CHANGE STREAMS (Real-time event-driven architectures)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: Need to react to database changes in real-time
+//   (notifications, cache invalidation, event sourcing, syncing services).
+
+// ✅ Solution — Change Streams (requires replica set or sharded cluster):
+
+const changeStream = db.orders.watch([
+  { $match: { "fullDocument.status": "completed" } }
+]);
+
+changeStream.on("change", (event) => {
+  console.log("Change detected:", event.operationType);
+  console.log("Document:", event.fullDocument);
+  // event.operationType: "insert" | "update" | "replace" | "delete" | "invalidate"
+});
+
+// Key features:
+// • Built on top of the oplog
+// • Resumable — use resumeToken to pick up where you left off after restart
+// • Can watch: a collection, a database, or the entire deployment
+// • Supports aggregation pipeline filters ($match, $project, etc.)
+
+// 📌 Use cases: Real-time notifications, CDC (Change Data Capture),
+//   microservice event propagation, search index syncing.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 15. OPLOG (Operations Log)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// • The oplog is a capped collection (local.oplog.rs) on each replica set member.
+// • Stores every write operation as an idempotent entry.
+// • Secondaries tail the primary's oplog to replicate data.
+// • Change Streams are built on top of the oplog.
+//
+// Key points:
+// • Oplog size is configurable (default: 5% of free disk space, min 990MB)
+// • If a secondary falls too far behind (oplog window exceeded), it needs
+//   a full resync → size your oplog for your write volume
+// • Each oplog entry contains: timestamp, namespace, operation type, and data
+//
+// Viewing the oplog:
+// use local;
+// db.oplog.rs.find().sort({ $natural: -1 }).limit(5);
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 16. CAPPED COLLECTIONS
+// ══════════════════════════════════════════════════════════════════════════════
 
-Fast reads (one query)
+// ❗ Problem: Logs/events grow forever → disk fills up.
+// ✅ Solution: Capped collections have a fixed size; oldest docs are
+//   automatically overwritten when the limit is reached.
 
-Atomic updates
-
-Cons
-
-Large document size
-
-Duplicate data
-
-Option 2: Referencing
-
-Store them separately with IDs.
-
-📌 Example
-
-users and orders collection with userId.
-
-Pros
-
-Good for large data
-
-Avoid duplication
-
-Cons
-
-Requires join ($lookup)
-
-More queries
-
-9. Sharded Cluster Architecture
-❗ Problem
-
-Need both scaling + high availability.
-
-MongoDB’s Solution
-
-3 parts:
-
-Shard → holds data
-
-Config servers → metadata (chunk info)
-
-mongos → router
-
-📌 What happens when data grows?
-
-Chunks move between shards to balance load.
-
-⚠️ Trade-offs
-
-Operational complexity
-
-Slow cross-shard queries
-
-10. TTL Index
-❗ Problem
-
-Need data to expire after time:
-
-Sessions
-
-Temporary tokens
-
-Old logs
-
-MongoDB Solution — TTL Index
-
-MongoDB automatically deletes documents after X seconds.
-
-📌 Example
-{ createdAt: 1 }, expireAfterSeconds: 3600
-
-
-Deletes doc after 1 hour.
-
-11. Index Types
-❗ Problem
-
-Slow queries due to no indexes.
-
-MongoDB Solution — Many index types
-
-Single-field
-
-Compound
-
-Text
-
-Geospatial
-
-Hashed
-
-TTL
-
-Wildcard
-
-📌 Why indexing helps
-
-Indexes reduce scanned documents:
-
-From 1M documents → To 10 indexed entries
-
-⚠️ Trade-offs
-
-Slower writes
-
-More RAM usage
-
-12. Backup & Restore
-❗ Problem
-
-What if server crashes? Data corruption? Need historical data?
-
-Solutions
-
-mongodump/mongorestore
-
-File system snapshots
-
-Backups from secondaries
-
-Atlas cloud backups
-
-Challenge
-
-Sharded clusters require consistent backups across shards.
-
-13. Security Best Practices
-❗ Problem
-
-By default, MongoDB was often left open to the internet → hacks & leaks.
-
-MongoDB Solutions
-
-Enable authentication
-
-Use TLS/SSL
-
-Role-based access control
-
-IP whitelisting
-
-Encryption at rest
-
-Disable external access
-
-14. When MongoDB is NOT a Good Fit
-❗ Problem
-
-MongoDB is great but not for everything.
-
-Not ideal for:
-
-Complex joins (many-to-many)
-
-Highly relational data
-
-Heavy ACID requirements
-
-High consistency needs
-
-OLAP queries
-
-15. Data Modeling in MongoDB vs SQL
-❗ Problem
-
-SQL normalizes, MongoDB does not.
-
-MongoDB Approach
-
-Model for queries
-
-Embed when reading together
-
-Reference when child data is too large or shared
-
-Use schema flexibility
-
-Plan shard key early
-
+db.createCollection("logs", { capped: true, size: 1073741824, max: 1000000 });
+// size: max bytes (1GB above)
+// max:  optional max document count
+
+// Properties:
+// • Preserves insertion order (no need to sort by _id for chronological order)
+// • Cannot delete individual documents (only drop the entire collection)
+// • Cannot shard a capped collection
+// • Inserts are very fast (no index overhead beyond _id)
+
+// Use cases: Application logs, event streams, circular buffers.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 17. CONNECTION POOLING & CURSOR BATCHING (SDE2 performance topic)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Connection Pooling ──
+// • MongoDB drivers maintain a pool of connections to the server.
+// • Avoids overhead of creating a new TCP connection per request.
+// • Key driver options:
+//     maxPoolSize:        max connections in the pool (default: 100)
+//     minPoolSize:        keep this many idle connections open
+//     maxIdleTimeMS:      close idle connections after this duration
+//     waitQueueTimeoutMS: max time to wait for a connection from the pool
+
+// 📌 In Node.js (mongoose):
+// mongoose.connect(uri, { maxPoolSize: 50, minPoolSize: 10 });
+
+// ── Cursor Batching ──
+// • find() returns a cursor, not all documents at once.
+// • Documents are fetched in batches (default first batch: 101 docs or 16MB).
+// • Subsequent batches are fetched via getMore commands.
+// • Cursor timeout: 10 minutes idle by default (use noCursorTimeout for long ops).
+// • For large exports, use .batchSize(N) to control memory usage:
+//   db.orders.find().batchSize(500).forEach(doc => { /* process */ });
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 18. SECURITY BEST PRACTICES
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: MongoDB left open with defaults → security breaches.
+
+// ✅ Best Practices:
+// 1. Enable authentication:      mongod --auth
+// 2. Use TLS/SSL:                Encrypt data in transit
+// 3. Role-Based Access Control:  Built-in roles (read, readWrite, dbAdmin, etc.)
+//                                 + custom roles for fine-grained permissions
+// 4. IP whitelisting:            Bind to specific IPs, use firewall rules
+// 5. Encryption at rest:         WiredTiger encryption or OS-level (LUKS, etc.)
+// 6. Auditing:                   Enable audit log for compliance
+// 7. Network isolation:          Run MongoDB in private subnet, not exposed to internet
+// 8. Least privilege:            Each app gets its own user with minimal permissions
+// 9. Field-Level Encryption:     Client-Side Field Level Encryption (CSFLE) for
+//                                 sensitive data (SSN, PII) — encrypted before
+//                                 leaving the driver, server never sees plaintext
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 19. BACKUP & RESTORE
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ❗ Problem: Server crash, data corruption, accidental deletion.
+
+// ── Methods ──
+// 1. mongodump / mongorestore:    Logical backup (BSON format)
+//    mongodump --uri="mongodb://..." --out=/backup/2025-04-19
+//    mongorestore --uri="mongodb://..." /backup/2025-04-19
+
+// 2. Filesystem snapshots:        LVM snapshots / EBS snapshots
+//    → Must use journaling. Lock writes first for consistency.
+
+// 3. Backups from secondary:      Take backup from secondary to avoid
+//    impacting primary performance.
+
+// 4. Atlas Cloud Backups:         Continuous backup + point-in-time recovery
+//    (managed service, easiest option).
+
+// ⚠️ Sharded cluster backups:
+//   Must stop the balancer and ensure consistent point-in-time snapshot
+//   across ALL shards — significantly more complex.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 20. ATLAS SEARCH & FULL-TEXT SEARCH (SDE2 — increasingly asked)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Basic Text Index ──
+db.articles.createIndex({ title: "text", body: "text" });
+db.articles.find({ $text: { $search: "mongodb aggregation" } });
+// Limitations: basic tokenization, no fuzzy matching, no faceting, no relevance tuning.
+
+// ── Atlas Search (Lucene-powered) ──
+// Available on MongoDB Atlas. Uses $search stage in aggregation pipeline.
+
+db.products.aggregate([
+  { $search: {
+      index: "default",
+      compound: {
+        must: [
+          { text: { query: "wireless headphones", path: "name", fuzzy: { maxEdits: 1 } } }
+        ],
+        filter: [
+          { range: { path: "price", gte: 50, lte: 300 } }
+        ]
+      }
+    }
+  },
+  { $limit: 10 },
+  { $project: { name: 1, price: 1, score: { $meta: "searchScore" } } }
+]);
+
+// Features: fuzzy search, autocomplete, facets, synonyms, custom analyzers,
+//   highlighting, compound queries, geo search, relevance scoring.
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 21. WHEN MongoDB IS NOT A GOOD FIT
+// ══════════════════════════════════════════════════════════════════════════════
+
+// MongoDB is NOT ideal for:
+// • Complex many-to-many relationships with frequent joins
+// • Highly relational data that benefits from strict normalization
+// • Applications requiring strong ACID across many entities (banking core)
+// • Heavy OLAP / analytical workloads (consider data warehouses)
+// • Applications needing complex SQL features (window functions at scale,
+//   CTEs, stored procedures — though MongoDB has improved here)
+// • Small, well-structured data with fixed schema (RDBMS is simpler)
+
+// MongoDB IS ideal for:
+// • Content management, catalogs, user profiles
+// • Real-time analytics, event logging
+// • IoT / time-series data
+// • Apps with rapidly evolving schemas
+// • Hierarchical / nested data
+// • High write throughput with horizontal scaling needs
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 22. MongoDB vs SQL — DATA MODELING COMPARISON
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ┌────────────────────┬──────────────────────┬──────────────────────────────┐
+// │     Aspect         │     SQL (RDBMS)       │     MongoDB (NoSQL)          │
+// ├────────────────────┼──────────────────────┼──────────────────────────────┤
+// │ Schema             │ Fixed, predefined     │ Flexible, per-document       │
+// │ Normalization      │ Highly normalized     │ Denormalized (embed)         │
+// │ Joins              │ Native JOINs          │ $lookup (expensive)          │
+// │ Transactions       │ Strong ACID           │ ACID (v4.0+, with overhead)  │
+// │ Scaling            │ Vertical (scale-up)   │ Horizontal (sharding)        │
+// │ Design approach    │ Design for storage    │ Design for queries           │
+// │ Schema migration   │ ALTER TABLE (heavy)   │ Flexible field addition      │
+// │ Relationships      │ Foreign keys          │ Embed or reference           │
+// │ Best for           │ Structured, relational│ Semi-structured, flexible    │
+// └────────────────────┴──────────────────────┴──────────────────────────────┘
+
+// MongoDB modeling rules of thumb:
+// • Model data based on how your application accesses it
+// • Embed data that is read together
+// • Reference data that is large, shared, or updated independently
+// • Plan your shard key EARLY (cannot change later)
+// • Use schema validation for critical collections
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 23. PERFORMANCE TUNING CHECKLIST (SDE2 must-know)
+// ══════════════════════════════════════════════════════════════════════════════
+
+// □ Use explain("executionStats") to identify slow queries
+// □ Check for COLLSCAN — create appropriate indexes
+// □ Follow ESR rule for compound indexes (Equality → Sort → Range)
+// □ Use covered queries where possible (project only indexed fields)
+// □ Enable profiler for slow queries:
+//     db.setProfilingLevel(1, { slowms: 100 })  // log queries >100ms
+//     db.system.profile.find().sort({ ts: -1 }).limit(5)
+// □ Monitor index size vs available RAM:
+//     db.collection.stats().indexSizes
+//     db.collection.totalIndexSize()
+// □ Avoid unbounded array growth in documents
+// □ Use projection to return only needed fields
+// □ For large result sets, use cursor.batchSize() appropriately
+// □ Monitor connection pool usage and tune maxPoolSize
+// □ Use read preference "secondary" for analytics queries
+// □ Set appropriate write concern (don't over-acknowledge)
+// □ Enable compression (snappy/zstd) for network and storage
+// □ Use allowDiskUse for memory-heavy aggregations
+// □ Monitor replication lag (rs.printSlaveReplicationInfo())
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 24. COMMON SDE2 INTERVIEW QUESTIONS & ANSWERS
+// ══════════════════════════════════════════════════════════════════════════════
+
+// Q1: How does MongoDB achieve high availability?
+// A:  Replica sets — data is replicated across multiple nodes. If the primary
+//     fails, an automatic election promotes a secondary to primary. Requires
+//     majority of voting members to elect a new primary.
+
+// Q2: Explain the difference between $merge and $out.
+// A:  $out replaces the entire target collection. $merge can insert new docs
+//     and update existing ones (upsert behavior) — better for incremental
+//     updates and materialized views.
+
+// Q3: What is the 16MB document size limit and how do you handle it?
+// A:  MongoDB documents cannot exceed 16MB. For larger data:
+//     - Use GridFS (splits files into chunks stored in separate collection)
+//     - Restructure schema — move large arrays to separate collection
+//     - Use referencing instead of embedding
+
+// Q4: How does MongoDB handle concurrent writes?
+// A:  WiredTiger uses document-level concurrency (not collection-level).
+//     Multiple threads can write to different documents simultaneously.
+//     For the same document, optimistic concurrency with retry logic is used.
+
+// Q5: When would you use an embedded document vs a reference?
+// A:  Embed when: data is always read together, 1:1 or 1:few relationship,
+//     bounded growth. Reference when: data is large, shared across entities,
+//     frequently updated independently, or unbounded growth.
+
+// Q6: What is a "hot shard" and how do you prevent it?
+// A:  A hot shard receives disproportionate traffic due to a poor shard key
+//     (e.g., monotonically increasing field like timestamp). Prevent by
+//     choosing a shard key with high cardinality and even distribution.
+//     Hashed shard keys can help for write-heavy workloads.
+
+// Q7: How do Change Streams work internally?
+// A:  Change streams are built on top of the oplog. They use a cursor that
+//     tails the oplog, filtering for changes to the watched namespace.
+//     They support resume tokens for fault tolerance.
+
+// Q8: Explain read concern "majority" vs "linearizable".
+// A:  "majority" returns data acknowledged by a majority of nodes — prevents
+//     dirty reads but may not reflect the very latest write.
+//     "linearizable" guarantees you see ALL acknowledged writes before the
+//     read — strongest consistency but higher latency (single-document only).
+
+// Q9: How would you design a MongoDB schema for an e-commerce app?
+// A:  - products: standalone collection (read-heavy, rarely updated)
+//     - users: embed addresses & preferences (always read together)
+//     - orders: reference userId & productIds (orders grow unbounded)
+//     - reviews: separate collection referencing productId (many reviews)
+//     - cart: embed items (bounded, session-scoped, frequently read together)
+
+// Q10: What is the aggregation pipeline memory limit?
+// A:  Each pipeline stage has a 100MB RAM limit by default. If exceeded,
+//     the operation fails unless { allowDiskUse: true } is set. Disk-based
+//     processing is slower but allows handling larger datasets.
+
+// Q11: Explain ObjectId structure.
+// A:  ObjectId is a 12-byte value:
+//     - 4 bytes: Unix timestamp (seconds since epoch)
+//     - 5 bytes: random value (unique per machine + process)
+//     - 3 bytes: incrementing counter (starts from random value)
+//     This makes ObjectIds roughly sortable by creation time.
+
+// Q12: What happens during a MongoDB failover?
+// A:  1. Primary becomes unreachable (heartbeat timeout: 10s default)
+//     2. Remaining members call an election
+//     3. Eligible secondary with most up-to-date oplog wins
+//     4. Promoted to primary (~10-30 seconds total)
+//     5. Drivers detect topology change and reconnect
+//     6. Uncommitted writes on old primary are rolled back
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// 25. SAMPLE SCHEMA FOR PRACTICE
+// ══════════════════════════════════════════════════════════════════════════════
+
+/*
+use shopDB;
+
+db.customers.insertMany([
+  { _id: 1, name: "Alice",   age: 30, spending: 1200, regionId: "R1" },
+  { _id: 2, name: "Bob",     age: 22, spending: 800,  regionId: "R2" },
+  { _id: 3, name: "Charlie", age: 40, spending: 1500, regionId: "R1" }
+]);
+
+db.orders.insertMany([
+  { _id: 101, customerId: 1, productId: "P1", amount: 300, status: "completed", orderDate: ISODate("2025-02-10") },
+  { _id: 102, customerId: 2, productId: "P2", amount: 450, status: "pending",   orderDate: ISODate("2025-03-01") },
+  { _id: 103, customerId: 1, productId: "P1", amount: 700, status: "completed", orderDate: ISODate("2025-04-15") },
+  { _id: 104, customerId: 3, productId: "P3", amount: 150, status: "completed", orderDate: ISODate("2025-05-20") }
+]);
+
+db.products.insertMany([
+  { _id: "P1", name: "Laptop",     category: "Electronics", price: 1200 },
+  { _id: "P2", name: "Headphones", category: "Electronics", price: 150  },
+  { _id: "P3", name: "Desk Chair", category: "Furniture",   price: 350  }
+]);
+
+db.sales.insertMany([
+  { _id: 201, productId: "P1", date: ISODate("2025-01-05"), amount: 200, quantity: 2 },
+  { _id: 202, productId: "P1", date: ISODate("2025-01-15"), amount: 300, quantity: 3 },
+  { _id: 203, productId: "P2", date: ISODate("2025-02-10"), amount: 500, quantity: 5 },
+  { _id: 204, productId: "P1", date: ISODate("2025-03-01"), amount: 400, quantity: 4 }
+]);
+
+db.regions.insertMany([
+  { _id: "R1", name: "North America" },
+  { _id: "R2", name: "Europe" }
+]);
+
+db.employees.insertMany([
+  { _id: 1, name: "CEO",     managerId: null },
+  { _id: 2, name: "VP Eng",  managerId: 1 },
+  { _id: 3, name: "Manager", managerId: 2 },
+  { _id: 4, name: "Dev",     managerId: 3 }
+]);
+*/
