@@ -23,7 +23,6 @@
 22. Search in Rotated Sorted Array
 23. Find Peak Element
 24. Longest Consecutive Sequence
-
 25. Kadane Variant – Circular Subarray
 26. Merge Intervals
 27. Insert Interval
@@ -42,7 +41,7 @@
 37. Valid Anagram
 38. Implement strStr()
 39. Reverse String
-40. First Unique Character in a String
+40. First Unique Character in a String     
 41. Longest Common Prefix
 42. Isomorphic Strings
 43. Word Pattern
@@ -50,6 +49,7 @@
 45. Longest Repeating Character Replacement
 46. Minimum Window Substring
 47. Group Anagrams
+
 48. Count Palindromic Substrings
 49. Longest Palindromic Substring
 50. Find All Anagrams in a String

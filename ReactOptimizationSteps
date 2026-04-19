@@ -23,3 +23,248 @@ Prebuild Thing Utilization (available in react compiler and vite)
 -> Caching function
 -> minifization of jss css
 -> Router Lazy Loading 
+
+
+
+🔹 Worker Threads
+Introduced to handle CPU-intensive tasks using multithreading.
+Runs multiple threads inside a single process.
+Threads share memory (can use SharedArrayBuffer), making communication faster.
+Best for:
+Heavy computations (image processing, ML tasks)
+Avoiding blocking the event loop
+
+👉 Key point: Parallelism within the same process
+
+🔹 Clustering (cluster module)
+Used to scale Node.js apps across multiple CPU cores.
+Creates multiple processes (workers) that share the same server port.
+Each worker runs its own event loop and memory space.
+A master process distributes incoming requests.
+
+Best for:
+
+Web servers handling high traffic
+Horizontal scaling on a single machine
+
+👉 Key point: Multiple processes handling requests in parallel
+
+🔹 Forking (child_process.fork)
+Creates a new Node.js process.
+Used for running independent tasks or services.
+Communication happens via IPC (message passing).
+No shared memory by default.
+
+Best for:
+
+Background jobs
+Isolated task execution
+
+
+
+API Debugging Strategy – Small Notes (Interview Quick Revision)
+1. Some Users Slow, Others Fine
+Check:
+User data size
+Cache miss
+Region/location
+Premium feature path
+User-specific locks
+Payload difference
+Strategy:
+
+Compare slow user vs fast user using logs/traces.
+
+2. All Users Slow
+Check:
+Traffic spike
+DB pool exhaustion
+Cache outage
+Dependency slow
+Thread starvation
+Recent deploy
+Strategy:
+
+Check shared bottlenecks + rollback if recent release.
+
+3. CPU Normal but API Slow
+Check:
+Waiting on DB
+Locks
+External API
+DNS/network
+Thread queues
+Strategy:
+
+CPU ≠ healthy. Inspect waits/blocking.
+
+4. DB Healthy but API Slow
+Check:
+Connection pool full
+Slow query
+ORM N+1
+Retry storms
+Network latency
+Strategy:
+
+DB health ≠ query/path health.
+
+5. Memory Fine but Slow
+Check:
+GC pauses
+Memory leak
+Heap pressure
+Object churn
+Strategy:
+
+Look at GC logs / heap metrics.
+
+6. p50 Good, p99 Bad
+Check:
+One slow pod
+One shard slow
+Retries
+Cold cache
+GC spikes
+Strategy:
+
+Investigate outliers, not averages.
+
+7. Errors Zero but Users Say Slow
+Check:
+High latency
+Client timeout near misses
+Retries hidden
+Strategy:
+
+Look at p95/p99 latency.
+
+8. Only Write APIs Slow
+Check:
+Row locks
+Transactions
+Hot rows
+Sync downstream calls
+Strategy:
+
+Inspect lock waits + write path.
+
+9. Only Read APIs Slow
+Check:
+Missing indexes
+Full scans
+Cache miss storm
+Heavy joins
+Strategy:
+
+Check query plans + cache ratio.
+
+10. One Pod Slow
+Check:
+Bad node
+Memory leak
+CPU throttling
+Stale connections
+Strategy:
+
+Compare pod metrics, restart pod if needed.
+
+11. One Region Slow
+Check:
+CDN issue
+DNS routing
+Regional LB
+Replica lag
+Strategy:
+
+Compare region dashboards.
+
+12. After Deployment Slow
+Check:
+Code regression
+Config change
+New SQL
+Pool size changed
+Strategy:
+
+Rollback first, RCA later.
+
+13. Worked in QA, Broke in Prod
+Check:
+Large prod data
+Real traffic concurrency
+Dirty data
+Config mismatch
+Real dependency latency
+Strategy:
+
+QA validates function, prod validates scale.
+
+14. Every Hour Slowdown
+Check:
+Cron jobs
+Backups
+ETL
+Cache refresh
+Strategy:
+
+Correlate with schedule.
+
+15. Queue Growing
+Check:
+Slow consumers
+Poison messages
+Retry loops
+Dependency delays
+Strategy:
+
+Compare producer vs consumer throughput.
+
+16. Cache Healthy but Slow
+Check:
+Low hit ratio
+Hot key
+Huge payload
+Stampede
+Strategy:
+
+Health up ≠ useful cache.
+
+17. External Dependency Slow
+Check:
+Payment API
+Auth service
+CRM/search service
+Strategy:
+
+Timeout + fallback + circuit breaker.
+
+18. Traffic Same but Latency Doubled
+Check:
+Cache drop
+Query plan changed
+Dependency slower
+New deployment
+Strategy:
+
+Efficiency dropped, not traffic issue.
+
+19. Sudden Spike in DB CPU
+Check:
+Missing index
+Full scans
+Cache down
+Burst traffic
+Strategy:
+
+Check top queries immediately.
+
+20. Login API Slow Only
+Check:
+Auth provider
+Token signing
+Session store
+User profile fetch
+Strategy:
+
+Trace auth chain.
