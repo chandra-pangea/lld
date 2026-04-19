@@ -1,124 +1,1127 @@
--- create
-CREATE TABLE STUDENTS (
-  studentId INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  major TEXT NOT NULL,
-  gpa REAL
+-- ╔══════════════════════════════════════════════════════════════════════════════╗
+-- ║          SQL — Complete SDE2 Interview Reference Guide                     ║
+-- ║          (DDL, DML, Joins, Subqueries, Views, Triggers, Procedures, etc.)  ║
+-- ╚══════════════════════════════════════════════════════════════════════════════╝
+
+
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+-- TABLE OF CONTENTS
+-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--  1.  DDL — CREATE, ALTER, DROP, TRUNCATE
+--  2.  DML — INSERT, UPDATE, DELETE
+--  3.  DQL — SELECT, WHERE, ORDER BY, LIMIT, DISTINCT
+--  4.  Aggregate Functions — COUNT, SUM, AVG, MIN, MAX
+--  5.  GROUP BY & HAVING
+--  6.  Joins — INNER, LEFT, RIGHT, FULL OUTER, CROSS, SELF
+--  7.  Subqueries — Scalar, Correlated, IN/EXISTS
+--  8.  SET Operations — UNION, INTERSECT, EXCEPT
+--  9.  Views — Regular & Materialized
+-- 10.  Indexes & Execution Plans (EXPLAIN)
+-- 11.  Stored Procedures
+-- 12.  Triggers
+-- 13.  Constraints & Foreign Keys (CASCADE)
+-- 14.  Transactions & Isolation Levels
+-- 15.  Window Functions (SDE2 must-know)
+-- 16.  CTEs — Common Table Expressions (SDE2 must-know)
+-- 17.  Optimistic Locking (Version Control Pattern)
+-- 18.  Practice Schema — Social Media App
+-- 19.  Common SDE2 Interview Queries
+-- 20.  Quick Reference Cheat Sheet
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 1. DDL — Data Definition Language
+-- ══════════════════════════════════════════════════════════════════════════════
+-- DDL commands define/modify the structure of database objects.
+-- They are auto-committed (cannot be rolled back in most RDBMS).
+
+-- ── CREATE TABLE ──
+-- Creates a new table with defined columns, data types, and constraints.
+
+CREATE TABLE employees (
+    employee_id   INT PRIMARY KEY,
+    employee_name VARCHAR(50) NOT NULL,
+    department_id INT,
+    manager_id    INT,
+    salary        INT
 );
 
--- insert
-INSERT INTO STUDENTS VALUES (101, 'Alice', 'Computer Science', 3.8);
-INSERT INTO STUDENTS VALUES (102, 'Bob', 'Physics', 3.5);
-INSERT INTO STUDENTS VALUES (103, 'Charlie', 'Computer Science', 3.9);
-INSERT INTO STUDENTS VALUES (104, 'Diana', 'Mathematics', 4.0);
-INSERT INTO STUDENTS VALUES (105, 'Eve', 'Physics', 3.2);
-
--- fetch
--- Select all students majoring in Computer Science with a GPA greater than 3.7
-SELECT * FROM STUDENTS WHERE major = 'Computer Science' AND gpa > 3.7;
-
-
--- Q1
-
-select name, major from STUDENTS order by major;
-
--- Q2 & 5
-
-select count(distinct major) from STUDENTS;
-
--- Q3
-
--- SELECT Count(*) FROM STUDENTS Group by major;
-
-SELECT major,Count(*) FROM STUDENTS Group by major;
-
--- Q4
-
-update STUDENTS
-set gpa = 3.5,major='DSA'
-where studentId=103;
-
-
-SELECT*from STUDENTS
-
-
-
-
-
-
-CREATE TABLE Students (
-  rollId INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
-  dept TEXT NOT NULL
+CREATE TABLE departments (
+    department_id   INT PRIMARY KEY,
+    department_name VARCHAR(50) NOT NULL
 );
 
-ALTER TABLE Students
-ADD COLUMN city VARCHAR(50);
 
-ALTER TABLE Students
-ADD COLUMN percentage_in_12th DECIMAL(5, 2);
+-- ── ALTER TABLE ──
+-- Modifies an existing table's structure.
 
-ALTER TABLE Students
-MODIFY COLUMN dept VARCHAR(100);
+-- Add a column:
+ALTER TABLE employees ADD COLUMN email VARCHAR(100);
 
--- Insert dummy values
-INSERT INTO Students (rollId, name, dept, city, percentage_in_12th) VALUES
-(0001, 'kunal ', 'CSE', 'Delhi', 92.10),
-(0002, 'aayush ', 'EE', 'Mumbai', 89.60),
-(0003, 'alekya ', 'EE', 'Bangalore', 94.30),
-(0004, 'anil ', 'CSE', 'Chennai', 87.80),
-(005, 'Upasna ', 'Mech', 'Kolkata', 90.25);
+-- Modify a column's data type:
+ALTER TABLE employees MODIFY COLUMN employee_name VARCHAR(200);
 
---  Show the students table
-SELECT * from Students;
+-- Drop a column:
+ALTER TABLE employees DROP COLUMN email;
 
--- Filter people having percentage greater than 80
-SELECT *
-FROM Students
-WHERE percentage_in_12th > 80;
-
--- Tell the top 3 people
-SELECT *
-FROM Students
-ORDER BY percentage_in_12th DESC
-LIMIT 3;
-
--- Get the average percentage of all people
-SELECT AVG(percentage_in_12th)
-FROM Students;
+-- Add a constraint:
+ALTER TABLE employees
+ADD CONSTRAINT fk_dept
+FOREIGN KEY (department_id) REFERENCES departments(department_id);
 
 
+-- ── DROP vs TRUNCATE ──
+-- DROP:     Deletes the table AND its structure entirely.          (DDL)
+-- TRUNCATE: Deletes ALL rows but keeps the table structure.        (DDL)
+-- DELETE:   Deletes specific rows (can use WHERE clause).          (DML)
+
+-- Key differences for interviews:
+-- ┌─────────────────┬──────────────┬──────────────┬──────────────┐
+-- │     Feature     │    DROP      │   TRUNCATE   │   DELETE     │
+-- ├─────────────────┼──────────────┼──────────────┼──────────────┤
+-- │ Removes table   │ Yes          │ No           │ No           │
+-- │ WHERE clause    │ N/A          │ No           │ Yes          │
+-- │ Rollback        │ No           │ No*          │ Yes          │
+-- │ Triggers fired  │ No           │ No           │ Yes          │
+-- │ Speed           │ Fast         │ Fast         │ Slow (row-   │
+-- │                 │              │              │   by-row)    │
+-- │ Resets AUTO_INC │ Yes          │ Yes          │ No           │
+-- └─────────────────┴──────────────┴──────────────┴──────────────┘
+-- * TRUNCATE can be rolled back in PostgreSQL within a transaction.
 
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 2. DML — Data Manipulation Language
+-- ══════════════════════════════════════════════════════════════════════════════
+-- DML commands manipulate the data within tables.
 
+-- ── INSERT ──
+INSERT INTO departments (department_id, department_name) VALUES
+    (1, 'Human Resources'),
+    (2, 'Engineering'),
+    (3, 'Finance'),
+    (4, 'Sales');
+
+INSERT INTO employees (employee_id, employee_name, department_id, manager_id, salary) VALUES
+    (1, 'Alice',   1, NULL, 60000),
+    (2, 'Bob',     2, 5,    80000),
+    (3, 'Charlie', 3, NULL, 70000),
+    (4, 'David',   4, 6,    90000),
+    (5, 'Emma',    2, NULL, 75000),
+    (6, 'Frank',   4, NULL, 85000),
+    (7, 'Grace',   2, 5,    95000),
+    (8, 'Hannah',  1, 1,    65000),
+    (9, 'Ivan',    4, 6,    72000),
+    (10, 'Jack',   3, 3,    55000);
+
+
+-- ── UPDATE ──
+-- Modifies existing rows. Always use WHERE to avoid updating all rows!
+
+UPDATE employees
+SET salary = 80000, department_id = 2
+WHERE employee_id = 3;
+
+
+-- ── DELETE ──
+-- Removes specific rows.
+
+DELETE FROM employees
+WHERE employee_id = 10;
+
+-- ⚠️ Without WHERE, DELETE removes ALL rows (but table structure remains).
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 3. DQL — Data Query Language (SELECT)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── Basic SELECT ──
+SELECT * FROM employees;
+SELECT employee_name, salary FROM employees;
+
+-- ── WHERE — Filtering ──
+SELECT * FROM employees WHERE salary > 70000;
+SELECT * FROM employees WHERE department_id = 2 AND salary > 75000;
+SELECT * FROM employees WHERE department_id IN (1, 2, 3);
+SELECT * FROM employees WHERE employee_name LIKE 'A%';     -- starts with A
+SELECT * FROM employees WHERE manager_id IS NULL;           -- NULL check
+
+-- ── ORDER BY — Sorting ──
+SELECT * FROM employees ORDER BY salary DESC;
+SELECT * FROM employees ORDER BY department_id ASC, salary DESC;
+
+-- ── LIMIT & OFFSET — Pagination ──
+SELECT * FROM employees ORDER BY salary DESC LIMIT 3;           -- top 3
+SELECT * FROM employees ORDER BY salary DESC LIMIT 5 OFFSET 5;  -- page 2
+
+-- ── DISTINCT — Unique Values ──
+SELECT DISTINCT department_id FROM employees;
+SELECT COUNT(DISTINCT department_id) AS unique_depts FROM employees;
+
+-- ── SQL Execution Order (SDE2 must-know!) ──
+-- This is the LOGICAL order in which clauses are processed:
+--   1. FROM / JOIN    → identify source tables
+--   2. WHERE          → filter rows
+--   3. GROUP BY       → group remaining rows
+--   4. HAVING         → filter groups
+--   5. SELECT         → choose columns, compute expressions
+--   6. DISTINCT       → remove duplicates
+--   7. ORDER BY       → sort results
+--   8. LIMIT / OFFSET → paginate
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 4. AGGREGATE FUNCTIONS
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Aggregate functions compute a single value from a set of rows.
+
+SELECT COUNT(*) AS total_employees FROM employees;
+SELECT SUM(salary) AS total_payroll FROM employees;
+SELECT AVG(salary) AS avg_salary FROM employees;
+SELECT MIN(salary) AS min_salary FROM employees;
+SELECT MAX(salary) AS max_salary FROM employees;
+
+-- Aggregates ignore NULL values (except COUNT(*)).
+-- COUNT(*) counts all rows. COUNT(column) counts non-NULL values only.
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 5. GROUP BY & HAVING
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── GROUP BY ──
+-- Groups rows sharing a value and applies aggregate functions to each group.
+
+-- Count employees per department:
+SELECT department_id, COUNT(*) AS emp_count
+FROM employees
+GROUP BY department_id;
+
+-- Average salary per department:
+SELECT department_id, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department_id;
+
+-- ── HAVING ──
+-- Filters GROUPS (unlike WHERE, which filters individual rows).
+-- HAVING is applied AFTER GROUP BY.
+
+-- Departments with more than 2 employees:
+SELECT department_id, COUNT(*) AS emp_count
+FROM employees
+GROUP BY department_id
+HAVING emp_count > 2;
+
+-- Departments where average salary exceeds 70000:
+SELECT department_id, AVG(salary) AS avg_salary
+FROM employees
+GROUP BY department_id
+HAVING AVG(salary) > 70000;
+
+-- ⚠️ WHERE vs HAVING:
+--   WHERE:  filters ROWS before grouping (cannot use aggregate functions)
+--   HAVING: filters GROUPS after grouping (CAN use aggregate functions)
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 6. JOINS
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Joins combine rows from two or more tables based on a related column.
+
+-- ┌─────────────────────────────────────────────────────────────────────────┐
+-- │  Visual Guide:                                                         │
+-- │                                                                         │
+-- │  INNER JOIN:       Only matching rows from BOTH tables                  │
+-- │  LEFT JOIN:        ALL from left  + matching from right (NULL if none)  │
+-- │  RIGHT JOIN:       ALL from right + matching from left  (NULL if none)  │
+-- │  FULL OUTER JOIN:  ALL from both  (NULL where no match on either side)  │
+-- │  CROSS JOIN:       Every row from A × every row from B (Cartesian)     │
+-- │  SELF JOIN:        A table joined with itself                           │
+-- └─────────────────────────────────────────────────────────────────────────┘
+
+
+-- ── INNER JOIN ──
+-- Returns only rows with matching values in BOTH tables.
+-- Employees who don't belong to any department, or departments with
+-- no employees, are excluded.
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+INNER JOIN departments d ON e.department_id = d.department_id;
+
+
+-- ── LEFT JOIN (LEFT OUTER JOIN) ──
+-- Returns ALL rows from the LEFT table + matching rows from the RIGHT table.
+-- If no match → right side columns are NULL.
+-- Use case: "Show all employees, even those without a department."
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+LEFT JOIN departments d ON e.department_id = d.department_id;
+
+
+-- ── RIGHT JOIN (RIGHT OUTER JOIN) ──
+-- Returns ALL rows from the RIGHT table + matching rows from the LEFT table.
+-- If no match → left side columns are NULL.
+-- Use case: "Show all departments, even those with no employees."
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+RIGHT JOIN departments d ON e.department_id = d.department_id;
+
+
+-- ── FULL OUTER JOIN ──
+-- Returns ALL rows from BOTH tables. NULL where no match exists.
+-- MySQL does NOT support FULL OUTER JOIN → emulate with UNION:
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+LEFT JOIN departments d ON e.department_id = d.department_id
+
+UNION
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+RIGHT JOIN departments d ON e.department_id = d.department_id;
+
+-- PostgreSQL supports it natively:
+-- SELECT e.employee_name, d.department_name
+-- FROM employees e
+-- FULL OUTER JOIN departments d ON e.department_id = d.department_id;
+
+
+-- ── CROSS JOIN ──
+-- Returns the Cartesian product: every row from A × every row from B.
+-- If A has 10 rows and B has 5 rows → result has 50 rows.
+-- Use case: Generate all possible combinations (e.g., sizes × colors).
+
+SELECT e.employee_name, d.department_name
+FROM employees e
+CROSS JOIN departments d;
+
+
+-- ── SELF JOIN ──
+-- A table joined with itself. Must use aliases to distinguish the two copies.
+-- Use case: Find employee-manager relationships.
+
+SELECT
+    e.employee_name  AS employee,
+    m.employee_name  AS manager
+FROM employees e
+INNER JOIN employees m ON e.manager_id = m.employee_id;
+
+-- To include employees WITHOUT a manager (CEO, etc.), use LEFT JOIN:
+SELECT
+    e.employee_name  AS employee,
+    m.employee_name  AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.employee_id;
+
+
+-- ── Multi-table JOIN ──
+-- Chain joins to combine 3+ tables in one query.
+-- Example: Comments with user details AND post content:
+
+-- SELECT c.content AS comment, u.user_name, p.content AS post
+-- FROM comments c
+-- INNER JOIN users u ON c.user_id = u.user_id
+-- INNER JOIN posts p ON c.post_id = p.post_id;
+
+
+-- ── Join Performance Tips (SDE2) ──
+-- • Ensure JOIN columns are indexed (massive performance boost).
+-- • Prefer smaller result sets — filter with WHERE before joining.
+-- • Avoid Cartesian products (CROSS JOIN) on large tables.
+-- • INNER JOIN is fastest; OUTER JOINs add overhead.
+-- • Use EXPLAIN to verify join strategy (Nested Loop, Hash, Merge).
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 7. SUBQUERIES
+-- ══════════════════════════════════════════════════════════════════════════════
+-- A subquery is a query nested inside another query.
+
+-- ── Scalar Subquery (returns single value) ──
+-- Employees earning above average:
+SELECT employee_name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees)
+ORDER BY salary DESC;
+
+-- ── Subquery in SELECT (Correlated) ──
+-- Each row triggers the subquery. Less efficient than JOIN for large data.
+SELECT
+    e.employee_name,
+    (SELECT m.employee_name
+     FROM employees m
+     WHERE m.employee_id = e.manager_id) AS manager_name
+FROM employees e
+WHERE e.manager_id IS NOT NULL;
+
+-- ── Subquery with IN ──
+-- Employees in departments that have 'Engineering' or 'Sales':
+SELECT employee_name
+FROM employees
+WHERE department_id IN (
+    SELECT department_id FROM departments
+    WHERE department_name IN ('Engineering', 'Sales')
+);
+
+-- ── Subquery with EXISTS ──
+-- Departments that have at least one employee:
+SELECT d.department_name
+FROM departments d
+WHERE EXISTS (
+    SELECT 1 FROM employees e
+    WHERE e.department_id = d.department_id
+);
+
+-- ── EXISTS vs IN (SDE2 interview favorite!) ──
+-- IN:     Evaluates the subquery first, creates a list, then matches.
+--         Better when subquery returns SMALL result set.
+-- EXISTS: For each outer row, checks if subquery returns any row.
+--         Better when outer table is SMALL and inner table is LARGE.
+--         Short-circuits (stops at first match).
+
+-- ── Inline View (Subquery in FROM) ──
+-- Employees earning above department average:
+SELECT e.employee_name, e.salary, dept_avg.avg_salary
+FROM employees e
+JOIN (
+    SELECT department_id, AVG(salary) AS avg_salary
+    FROM employees
+    GROUP BY department_id
+) dept_avg ON e.department_id = dept_avg.department_id
+WHERE e.salary > dept_avg.avg_salary;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 8. SET OPERATIONS
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Combine results from two SELECT statements.
+-- Both queries must have the same number of columns with compatible types.
+
+-- UNION:      Combines and removes duplicates.
+-- UNION ALL:  Combines and keeps duplicates (faster, no dedup overhead).
+-- INTERSECT:  Returns rows present in BOTH queries.
+-- EXCEPT:     Returns rows in first query but NOT in second (MINUS in Oracle).
+
+-- Example: All names from both employees and managers (no duplicates)
+SELECT employee_name FROM employees
+UNION
+SELECT employee_name FROM employees WHERE manager_id IS NULL;
+
+-- ⚠️ UNION does a sort + dedup internally. Use UNION ALL when duplicates
+--    are acceptable for better performance.
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 9. VIEWS — Regular & Materialized
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── Regular View ──
+-- A virtual table — stores the QUERY definition, not the data.
+-- Every time you SELECT from a view, the underlying query runs.
+
+CREATE OR REPLACE VIEW v_employee_details AS
+SELECT
+    e.employee_id,
+    e.employee_name,
+    d.department_name,
+    e.salary
+FROM employees e
+LEFT JOIN departments d ON e.department_id = d.department_id;
+
+-- Usage:
+SELECT * FROM v_employee_details WHERE salary > 70000;
+
+-- ── When is a View UPDATABLE? ──
+-- A view is updatable (INSERT/UPDATE/DELETE through it) when:
+--   ✅ Based on a single base table
+--   ✅ No GROUP BY, aggregate functions, or DISTINCT
+--   ✅ No JOINs (some simple joins may work in certain RDBMS)
+--   ✅ No subqueries in SELECT
+--   ✅ No UNION or UNION ALL
+
+-- Check if a view is updatable (MySQL):
+SELECT TABLE_NAME, IS_UPDATABLE
+FROM INFORMATION_SCHEMA.VIEWS
+WHERE TABLE_NAME = 'v_employee_details';
+
+
+-- ── Materialized View (PostgreSQL / Oracle — NOT MySQL) ──
+-- Stores the RESULT of the query physically on disk.
+-- Faster reads (pre-computed) but data can become stale.
+
+-- Create:
+-- CREATE MATERIALIZED VIEW mv_dept_summary AS
+-- SELECT department_id, COUNT(*) AS emp_count, AVG(salary) AS avg_salary
+-- FROM employees
+-- GROUP BY department_id;
+
+-- Query (reads from stored result — very fast):
+-- SELECT * FROM mv_dept_summary WHERE department_id = 2;
+
+-- Refresh (re-run the query and update stored data):
+-- REFRESH MATERIALIZED VIEW mv_dept_summary;
+
+-- ┌──────────────────────┬──────────────────┬──────────────────────────────┐
+-- │     Feature          │  Regular View    │  Materialized View           │
+-- ├──────────────────────┼──────────────────┼──────────────────────────────┤
+-- │ Data storage         │ No (virtual)     │ Yes (physical)               │
+-- │ Read speed           │ Slower (runs     │ Faster (pre-computed)        │
+-- │                      │   query each     │                              │
+-- │                      │   time)          │                              │
+-- │ Data freshness       │ Always current   │ Can be stale                 │
+-- │ Manual refresh       │ N/A              │ Required (REFRESH command)   │
+-- │ Storage cost         │ None             │ Uses disk space              │
+-- │ Write to base table  │ Sometimes (if    │ No (read-only)               │
+-- │                      │   updatable)     │                              │
+-- │ Use case             │ Abstraction,     │ Heavy reports, dashboards,   │
+-- │                      │   security       │   pre-aggregated analytics   │
+-- │ MySQL support        │ ✅ Yes           │ ❌ No                        │
+-- │ PostgreSQL support   │ ✅ Yes           │ ✅ Yes                       │
+-- └──────────────────────┴──────────────────┴──────────────────────────────┘
+
+-- Analyze query performance with EXPLAIN:
+-- EXPLAIN ANALYZE SELECT * FROM mv_dept_summary WHERE department_id = 2;
+-- EXPLAIN ANALYZE SELECT department_id, COUNT(*), AVG(salary)
+--   FROM employees WHERE department_id = 2 GROUP BY department_id;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 10. INDEXES & EXECUTION PLANS (EXPLAIN)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── Creating Indexes ──
+CREATE INDEX idx_emp_dept ON employees(department_id);
+CREATE INDEX idx_emp_salary ON employees(salary);
+CREATE UNIQUE INDEX idx_emp_name ON employees(employee_name);
+
+-- Composite index (follows ESR principle — Equality, Sort, Range):
+CREATE INDEX idx_dept_salary ON employees(department_id, salary);
+
+-- ── EXPLAIN — Understanding Query Plans ──
+-- Shows HOW the database executes your query.
+
+EXPLAIN SELECT * FROM employees WHERE department_id = 2;
+
+-- Key things to look for in EXPLAIN output:
+-- • type:  "ALL" = full table scan (bad!) | "ref"/"eq_ref" = index used (good)
+-- • key:   which index is being used (NULL = no index)
+-- • rows:  estimated rows scanned (lower = better)
+-- • Extra: "Using index" = covered query | "Using filesort" = extra sort step
+
+-- EXPLAIN ANALYZE (PostgreSQL / MySQL 8.0+):
+-- Shows actual execution time, not just estimates.
+EXPLAIN ANALYZE SELECT * FROM employees WHERE salary > 70000;
+
+-- ⚠️ Index trade-offs:
+--   • Speeds up reads significantly
+--   • Slows down writes (INSERT/UPDATE/DELETE must update indexes)
+--   • Consumes disk space and memory
+--   • Maintain only indexes that are actively used in queries
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 11. STORED PROCEDURES
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Pre-compiled SQL blocks stored in the database. Called by name.
+-- Advantages: code reuse, reduced network round-trips, encapsulation.
+
+-- ── Basic Procedure with IN parameter ──
 DELIMITER $$
+CREATE PROCEDURE GetEmployeesByDept(IN dept_id INT)
+BEGIN
+    SELECT employee_id, employee_name, salary
+    FROM employees
+    WHERE department_id = dept_id;
+END $$
+DELIMITER ;
 
-CREATE PROCEDURE GetStudentsByCity (
-    IN input_city VARCHAR(50)
+-- Call:
+CALL GetEmployeesByDept(2);
+
+-- ── Procedure with IN and OUT parameters ──
+DELIMITER $$
+CREATE PROCEDURE GetDeptStats(
+    IN  dept_id     INT,
+    OUT emp_count   INT,
+    OUT avg_salary  DECIMAL(10,2)
 )
 BEGIN
-    SELECT rollId, name, dept, city, percentage_in_12th
-    FROM Students
-    WHERE city = input_city;
+    SELECT COUNT(*), AVG(salary)
+    INTO emp_count, avg_salary
+    FROM employees
+    WHERE department_id = dept_id;
 END $$
-
 DELIMITER ;
-CALL GetStudentsByCity('Delhi');
+
+-- Call and read output:
+CALL GetDeptStats(2, @count, @avg);
+SELECT @count AS emp_count, @avg AS avg_salary;
+
+-- ── List all procedures in a database ──
+SELECT ROUTINE_NAME, ROUTINE_TYPE, CREATED
+FROM INFORMATION_SCHEMA.ROUTINES
+WHERE ROUTINE_SCHEMA = 'your_database';
+
+-- ── Drop a procedure ──
+DROP PROCEDURE IF EXISTS GetEmployeesByDept;
+
+-- ⚠️ Procedures vs Functions:
+--   Procedure: called with CALL, can have IN/OUT/INOUT params, no return value
+--   Function:  called in SELECT, must return a single value, no OUT params
 
 
--- Write a SP for getting students having first division percentage_in_12th
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 12. TRIGGERS
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Automatically executed (fired) in response to INSERT, UPDATE, or DELETE.
+-- Can run BEFORE or AFTER the operation.
 
+-- ── Basic BEFORE INSERT Trigger ──
+-- Example: Auto-set created_at timestamp.
+
+-- DELIMITER $$
+-- CREATE TRIGGER before_emp_insert
+-- BEFORE INSERT ON employees
+-- FOR EACH ROW
+-- BEGIN
+--     SET NEW.created_at = NOW();
+-- END $$
+-- DELIMITER ;
+
+-- ── BEFORE UPDATE Trigger — Audit Trail ──
+-- Example: Track changes (log old salary before update).
+
+-- DELIMITER $$
+-- CREATE TRIGGER before_emp_update
+-- BEFORE UPDATE ON employees
+-- FOR EACH ROW
+-- BEGIN
+--     INSERT INTO salary_audit (employee_id, old_salary, new_salary, changed_at)
+--     VALUES (OLD.employee_id, OLD.salary, NEW.salary, NOW());
+-- END $$
+-- DELIMITER ;
+
+-- ── Key Concepts ──
+-- NEW: refers to the NEW row values (available in INSERT/UPDATE triggers)
+-- OLD: refers to the OLD row values (available in UPDATE/DELETE triggers)
+--
+-- ┌────────────┬──────────────────┬──────────────────┐
+-- │ Operation  │  OLD available?  │  NEW available?  │
+-- ├────────────┼──────────────────┼──────────────────┤
+-- │ INSERT     │  No              │  Yes             │
+-- │ UPDATE     │  Yes             │  Yes             │
+-- │ DELETE     │  Yes             │  No              │
+-- └────────────┴──────────────────┴──────────────────┘
+
+-- ── List triggers ──
+SELECT TRIGGER_NAME, EVENT_MANIPULATION, ACTION_STATEMENT
+FROM INFORMATION_SCHEMA.TRIGGERS
+WHERE TRIGGER_SCHEMA = 'your_database';
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 13. CONSTRAINTS & FOREIGN KEYS (CASCADE)
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── Constraint Types ──
+-- PRIMARY KEY:  Uniquely identifies each row. Cannot be NULL.
+-- FOREIGN KEY:  Enforces referential integrity between tables.
+-- UNIQUE:       Ensures all values in a column are distinct.
+-- NOT NULL:     Prevents NULL values.
+-- CHECK:        Validates values against a condition.
+-- DEFAULT:      Sets a default value if none provided.
+
+-- ── Foreign Key with CASCADE ──
+-- ON DELETE CASCADE: When parent row is deleted, child rows are auto-deleted.
+-- ON UPDATE CASCADE: When parent key is updated, child foreign keys auto-update.
+
+CREATE TABLE orders (
+    order_id    INT PRIMARY KEY,
+    employee_id INT,
+    amount      DECIMAL(10, 2),
+    FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+-- ── Modifying Foreign Keys ──
+-- Step 1: Find the constraint name
+SHOW CREATE TABLE orders;
+
+-- Step 2: Drop the old foreign key
+ALTER TABLE orders DROP FOREIGN KEY fk_constraint_name;
+
+-- Step 3: Add new foreign key with CASCADE
+ALTER TABLE orders
+ADD CONSTRAINT fk_emp_order
+FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
+ON DELETE CASCADE;
+
+-- ⚠️ CASCADE can be dangerous — a single DELETE on a parent can cascade
+--    and delete thousands of child rows. Use with caution!
+-- Alternatives:
+--   ON DELETE SET NULL   → sets foreign key to NULL
+--   ON DELETE RESTRICT   → prevents deletion if children exist (default)
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 14. TRANSACTIONS & ISOLATION LEVELS
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ── Transaction Basics ──
+-- A transaction groups multiple SQL statements into a single atomic unit.
+-- Either ALL succeed (COMMIT) or ALL are rolled back (ROLLBACK).
+
+START TRANSACTION;
+    UPDATE employees SET salary = salary - 5000 WHERE employee_id = 1;
+    UPDATE employees SET salary = salary + 5000 WHERE employee_id = 2;
+COMMIT;
+-- If any error → ROLLBACK;
+
+-- ── ACID Properties ──
+-- A — Atomicity:    All or nothing.
+-- C — Consistency:  DB moves from one valid state to another.
+-- I — Isolation:    Concurrent transactions don't interfere.
+-- D — Durability:   Committed data survives crashes.
+
+-- ── Isolation Levels (SDE2 must-know!) ──
+-- Controls what a transaction can SEE when other transactions are running.
+
+-- ┌────────────────────┬──────────────┬──────────────────┬──────────────┐
+-- │ Isolation Level    │ Dirty Reads  │ Non-Repeatable   │ Phantom      │
+-- │                    │              │ Reads            │ Reads        │
+-- ├────────────────────┼──────────────┼──────────────────┼──────────────┤
+-- │ READ UNCOMMITTED   │ ✅ Possible  │ ✅ Possible      │ ✅ Possible  │
+-- │ READ COMMITTED     │ ❌ Prevented │ ✅ Possible      │ ✅ Possible  │
+-- │ REPEATABLE READ    │ ❌ Prevented │ ❌ Prevented     │ ✅ Possible  │
+-- │ SERIALIZABLE       │ ❌ Prevented │ ❌ Prevented     │ ❌ Prevented │
+-- └────────────────────┴──────────────┴──────────────────┴──────────────┘
+
+-- Definitions:
+-- Dirty Read:          Reading uncommitted data from another transaction.
+-- Non-Repeatable Read: Same query returns different data within a transaction
+--                      (another txn modified and committed between reads).
+-- Phantom Read:        Same query returns different ROW COUNT (another txn
+--                      added/deleted rows and committed between reads).
+
+-- Setting isolation level:
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+START TRANSACTION;
+    SELECT * FROM employees WHERE department_id = 2;
+    -- Even if another transaction inserts/updates, this txn sees a snapshot.
+COMMIT;
+
+-- ⚠️ Higher isolation = more correctness but worse performance (more locking).
+-- Default: MySQL uses REPEATABLE READ, PostgreSQL uses READ COMMITTED.
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 15. WINDOW FUNCTIONS (SDE2 must-know!)
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Window functions perform calculations across a set of rows RELATED to the
+-- current row, WITHOUT collapsing rows (unlike GROUP BY).
+-- Syntax: function() OVER (PARTITION BY ... ORDER BY ... ROWS/RANGE ...)
+
+-- ── ROW_NUMBER — Unique sequential number per partition ──
+SELECT
+    employee_name,
+    department_id,
+    salary,
+    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rank_in_dept
+FROM employees;
+
+-- ── RANK vs DENSE_RANK ──
+-- RANK:       Skips numbers after ties (1, 2, 2, 4)
+-- DENSE_RANK: No gaps after ties        (1, 2, 2, 3)
+SELECT
+    employee_name,
+    salary,
+    RANK()       OVER (ORDER BY salary DESC) AS rank_val,
+    DENSE_RANK() OVER (ORDER BY salary DESC) AS dense_rank_val
+FROM employees;
+
+-- ── Top-N per group (classic interview question!) ──
+-- Get the top 2 highest-paid employees per department:
+SELECT * FROM (
+    SELECT
+        employee_name,
+        department_id,
+        salary,
+        ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rn
+    FROM employees
+) ranked
+WHERE rn <= 2;
+
+-- ── Running Total / Cumulative Sum ──
+SELECT
+    employee_name,
+    salary,
+    SUM(salary) OVER (ORDER BY employee_id ROWS UNBOUNDED PRECEDING) AS running_total
+FROM employees;
+
+-- ── Moving Average ──
+SELECT
+    employee_name,
+    salary,
+    AVG(salary) OVER (ORDER BY employee_id ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg
+FROM employees;
+
+-- ── LAG / LEAD — Access previous/next row's value ──
+SELECT
+    employee_name,
+    salary,
+    LAG(salary, 1)  OVER (ORDER BY employee_id) AS prev_salary,
+    LEAD(salary, 1) OVER (ORDER BY employee_id) AS next_salary
+FROM employees;
+
+-- ── NTILE — Divide rows into N buckets ──
+SELECT
+    employee_name,
+    salary,
+    NTILE(4) OVER (ORDER BY salary DESC) AS quartile
+FROM employees;
+
+-- ── Difference from aggregate functions ──
+-- GROUP BY:     Collapses rows → one row per group
+-- Window funcs: Keep ALL rows → add computed column alongside original data
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 16. CTEs — Common Table Expressions (SDE2 must-know!)
+-- ══════════════════════════════════════════════════════════════════════════════
+-- CTEs create named temporary result sets within a single query.
+-- Improve readability and enable recursive queries.
+
+-- ── Basic CTE ──
+WITH dept_stats AS (
+    SELECT department_id, AVG(salary) AS avg_salary, COUNT(*) AS emp_count
+    FROM employees
+    GROUP BY department_id
+)
+SELECT e.employee_name, e.salary, ds.avg_salary
+FROM employees e
+JOIN dept_stats ds ON e.department_id = ds.department_id
+WHERE e.salary > ds.avg_salary;
+
+-- ── Multiple CTEs ──
+WITH
+high_earners AS (
+    SELECT * FROM employees WHERE salary > 80000
+),
+engineering AS (
+    SELECT * FROM employees WHERE department_id = 2
+)
+SELECT * FROM high_earners
+WHERE employee_id IN (SELECT employee_id FROM engineering);
+
+-- ── Recursive CTE — Management Hierarchy ──
+-- Find the full management chain from CEO down:
+WITH RECURSIVE org_tree AS (
+    -- Anchor: CEO (no manager)
+    SELECT employee_id, employee_name, manager_id, 0 AS level
+    FROM employees
+    WHERE manager_id IS NULL
+
+    UNION ALL
+
+    -- Recursive: employees who report to someone in org_tree
+    SELECT e.employee_id, e.employee_name, e.manager_id, ot.level + 1
+    FROM employees e
+    INNER JOIN org_tree ot ON e.manager_id = ot.employee_id
+)
+SELECT * FROM org_tree ORDER BY level, employee_name;
+
+-- ⚠️ CTE vs Subquery:
+--   CTE:      Named, reusable within the query, supports recursion
+--   Subquery: Inline, cannot be reused, no recursion support
+-- ⚠️ CTE vs Temp Table:
+--   CTE:        Lives only for the duration of the query
+--   Temp Table: Lives for the duration of the session, can be indexed
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 17. OPTIMISTIC LOCKING (Version Control Pattern)
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Used when concurrent updates can happen to the same row.
+-- Instead of locking the row (pessimistic), check a version column.
+
+-- ── Schema ──
+ALTER TABLE employees ADD COLUMN version INT DEFAULT 1;
+
+-- ── Application Logic ──
+-- 1. Read the current version: SELECT salary, version FROM employees WHERE employee_id = 1;
+-- 2. Update with version check:
+
+UPDATE employees
+SET salary = 90000, version = version + 1
+WHERE employee_id = 1 AND version = 1;
+-- If affected_rows = 0 → another transaction already updated → retry!
+
+-- ── Enforce with Trigger ──
 DELIMITER $$
-
-CREATE PROCEDURE GetStudentsByFirstDivision ()
+CREATE TRIGGER before_emp_version_update
+BEFORE UPDATE ON employees
+FOR EACH ROW
 BEGIN
-    SELECT rollId, name, dept, city, percentage_in_12th
-    FROM Students
-    WHERE percentage_in_12th >60 ;
+    IF NEW.version <= OLD.version THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Version conflict: stale update detected';
+    END IF;
+    SET NEW.version = OLD.version + 1;
 END $$
-
 DELIMITER ;
-CALL GetStudentsByFirstDivision();
+
+-- ⚠️ Optimistic vs Pessimistic Locking:
+--   Optimistic:   No locks held. Check version on write. Good for LOW contention.
+--   Pessimistic:  SELECT ... FOR UPDATE (locks the row). Good for HIGH contention.
 
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 18. PRACTICE SCHEMA — Social Media App
+-- ══════════════════════════════════════════════════════════════════════════════
+-- A well-designed schema demonstrating: foreign keys, self-referencing,
+-- generated columns, triggers, polymorphic associations, cascade deletes.
 
+/*
+-- ── Users ──
+CREATE TABLE users (
+    user_id   INT PRIMARY KEY AUTO_INCREMENT,
+    user_name VARCHAR(50) NOT NULL,
+    gender    VARCHAR(10) NOT NULL,
+    dob       DATE NOT NULL
+);
+
+-- ── Contact Details (1:Many with users) ──
+CREATE TABLE contact_details (
+    contact_id    INT PRIMARY KEY AUTO_INCREMENT,
+    user_id       INT NOT NULL,
+    contact_value VARCHAR(50) NOT NULL,
+    contact_type  VARCHAR(20) NOT NULL,    -- 'PHONE', 'EMAIL'
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- ── Address Details (1:Many with users) ──
+CREATE TABLE address_details (
+    address_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id    INT NOT NULL,
+    house_no   VARCHAR(50) NOT NULL,
+    road       VARCHAR(100) NOT NULL,
+    district   VARCHAR(100) NOT NULL,
+    state      VARCHAR(100) NOT NULL,
+    country    VARCHAR(100) NOT NULL,
+    pincode    VARCHAR(10) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- ── Friendships (Many:Many, self-referencing with duplicate prevention) ──
+-- Uses a generated hash column to prevent (A,B) and (B,A) duplicates.
+CREATE TABLE friendships (
+    user_id_1        INT NOT NULL,
+    user_id_2        INT NOT NULL,
+    friendship_since DATE NOT NULL,
+    friendship_hash  VARCHAR(90) AS (
+        CONCAT(LEAST(user_id_1, user_id_2), '-', GREATEST(user_id_1, user_id_2))
+    ) STORED,
+    PRIMARY KEY (friendship_hash),
+    FOREIGN KEY (user_id_1) REFERENCES users(user_id),
+    FOREIGN KEY (user_id_2) REFERENCES users(user_id)
+);
+-- Inserting (1,2) and (2,1) both generate hash "1-2" → duplicate key error!
+
+-- ── Posts ──
+CREATE TABLE posts (
+    post_id   INT PRIMARY KEY AUTO_INCREMENT,
+    user_id   INT NOT NULL,
+    content   TEXT NOT NULL,
+    post_date DATE NOT NULL,
+    post_type VARCHAR(20) NOT NULL,         -- 'TEXT', 'IMAGE', 'VIDEO'
+    media_url VARCHAR(200),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+-- ── Reactions (Polymorphic: can react to posts OR comments) ──
+CREATE TABLE reactions (
+    reaction_id     INT PRIMARY KEY AUTO_INCREMENT,
+    ref_entity_id   INT NOT NULL,             -- references post_id or comment_id
+    ref_entity_type ENUM('POST', 'COMMENT') NOT NULL,
+    user_id         INT NOT NULL,
+    reaction_type   VARCHAR(20) NOT NULL,     -- 'LIKE', 'LOVE', 'HAHA'
+    reaction_date   DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    UNIQUE KEY (ref_entity_id, ref_entity_type, user_id)  -- one reaction per user per entity
+);
+
+-- ── Comments (self-referencing for nested replies) ──
+CREATE TABLE comments (
+    comment_id        INT PRIMARY KEY AUTO_INCREMENT,
+    post_id           INT NOT NULL,
+    user_id           INT NOT NULL,
+    content           TEXT NOT NULL,
+    comment_date      DATE NOT NULL,
+    parent_comment_id INT,                    -- NULL = top-level, else = reply
+    FOREIGN KEY (post_id) REFERENCES posts(post_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (parent_comment_id) REFERENCES comments(comment_id)
+);
+*/
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 19. COMMON SDE2 INTERVIEW QUERIES
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- Q1: Find the Nth highest salary (without LIMIT/OFFSET)
+-- Using correlated subquery:
+SELECT DISTINCT salary
+FROM employees e1
+WHERE 3 = (     -- N = 3 for 3rd highest
+    SELECT COUNT(DISTINCT salary)
+    FROM employees e2
+    WHERE e2.salary >= e1.salary
+);
+
+-- Using DENSE_RANK (cleaner):
+SELECT salary FROM (
+    SELECT salary, DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+    FROM employees
+) ranked
+WHERE rnk = 3;
+
+
+-- Q2: Find duplicate rows
+SELECT employee_name, COUNT(*) AS cnt
+FROM employees
+GROUP BY employee_name
+HAVING COUNT(*) > 1;
+
+
+-- Q3: Delete duplicate rows (keep one)
+DELETE e1 FROM employees e1
+INNER JOIN employees e2
+ON e1.employee_name = e2.employee_name
+AND e1.employee_id > e2.employee_id;
+
+
+-- Q4: Find employees who earn more than their manager
+SELECT e.employee_name AS employee, e.salary AS emp_salary,
+       m.employee_name AS manager, m.salary AS mgr_salary
+FROM employees e
+JOIN employees m ON e.manager_id = m.employee_id
+WHERE e.salary > m.salary;
+
+
+-- Q5: Cumulative salary per department
+SELECT
+    employee_name,
+    department_id,
+    salary,
+    SUM(salary) OVER (
+        PARTITION BY department_id
+        ORDER BY salary
+        ROWS UNBOUNDED PRECEDING
+    ) AS cumulative_salary
+FROM employees;
+
+
+-- Q6: Find departments with no employees
+-- Method 1: LEFT JOIN + NULL check
+SELECT d.department_name
+FROM departments d
+LEFT JOIN employees e ON d.department_id = e.department_id
+WHERE e.employee_id IS NULL;
+
+-- Method 2: NOT EXISTS
+SELECT d.department_name
+FROM departments d
+WHERE NOT EXISTS (
+    SELECT 1 FROM employees e WHERE e.department_id = d.department_id
+);
+
+
+-- Q7: Pivot / Conditional Aggregation
+-- Count employees per department in columns:
+SELECT
+    SUM(CASE WHEN department_id = 1 THEN 1 ELSE 0 END) AS hr,
+    SUM(CASE WHEN department_id = 2 THEN 1 ELSE 0 END) AS engineering,
+    SUM(CASE WHEN department_id = 3 THEN 1 ELSE 0 END) AS finance,
+    SUM(CASE WHEN department_id = 4 THEN 1 ELSE 0 END) AS sales
+FROM employees;
+
+
+-- Q8: Find all users with at least N friends
+SELECT u.user_id, u.user_name, COUNT(*) AS total_friends
+FROM users u
+JOIN friendships f ON u.user_id = f.user_id_1 OR u.user_id = f.user_id_2
+GROUP BY u.user_id, u.user_name
+HAVING total_friends >= 2;
+
+
+-- Q9: Year-over-Year growth
+WITH yearly AS (
+    SELECT
+        YEAR(order_date) AS yr,
+        SUM(amount) AS total
+    FROM orders
+    GROUP BY YEAR(order_date)
+)
+SELECT
+    yr,
+    total,
+    LAG(total) OVER (ORDER BY yr) AS prev_year,
+    ROUND((total - LAG(total) OVER (ORDER BY yr)) / LAG(total) OVER (ORDER BY yr) * 100, 2) AS yoy_growth_pct
+FROM yearly;
+
+
+-- Q10: Consecutive date ranges (gaps and islands problem)
+-- Find employees who logged in on 3+ consecutive days:
+WITH login_ranked AS (
+    SELECT
+        user_id,
+        login_date,
+        login_date - INTERVAL ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY login_date) DAY AS grp
+    FROM logins
+)
+SELECT user_id, MIN(login_date) AS start_date, MAX(login_date) AS end_date,
+       COUNT(*) AS consecutive_days
+FROM login_ranked
+GROUP BY user_id, grp
+HAVING COUNT(*) >= 3;
+
+
+-- ══════════════════════════════════════════════════════════════════════════════
+-- 20. QUICK REFERENCE CHEAT SHEET
+-- ══════════════════════════════════════════════════════════════════════════════
+
+-- ┌───────────────────────┬──────────────────────────────────────────────────┐
+-- │ Concept               │ Key Syntax                                       │
+-- ├───────────────────────┼──────────────────────────────────────────────────┤
+-- │ Create table          │ CREATE TABLE t (col TYPE constraints);           │
+-- │ Add column            │ ALTER TABLE t ADD COLUMN col TYPE;               │
+-- │ Insert row            │ INSERT INTO t (cols) VALUES (vals);              │
+-- │ Update row            │ UPDATE t SET col=val WHERE condition;            │
+-- │ Delete row            │ DELETE FROM t WHERE condition;                   │
+-- │ Select + filter       │ SELECT cols FROM t WHERE cond ORDER BY col;     │
+-- │ Aggregate             │ SELECT COUNT/SUM/AVG/MIN/MAX(col) FROM t;       │
+-- │ Group + filter groups │ SELECT col, AGG() FROM t GROUP BY col HAVING;   │
+-- │ Inner join            │ FROM a INNER JOIN b ON a.col = b.col;           │
+-- │ Left join             │ FROM a LEFT JOIN b ON a.col = b.col;            │
+-- │ Self join             │ FROM t a JOIN t b ON a.mgr = b.id;              │
+-- │ Subquery              │ WHERE col IN (SELECT ...);                       │
+-- │ EXISTS                │ WHERE EXISTS (SELECT 1 FROM ... WHERE ...);      │
+-- │ CTE                   │ WITH name AS (SELECT ...) SELECT ...;            │
+-- │ Recursive CTE         │ WITH RECURSIVE name AS (anchor UNION ALL rec);  │
+-- │ Window function       │ FUNC() OVER (PARTITION BY ... ORDER BY ...);    │
+-- │ View                  │ CREATE VIEW v AS SELECT ...;                     │
+-- │ Materialized view     │ CREATE MATERIALIZED VIEW mv AS SELECT ...; (PG) │
+-- │ Stored procedure      │ CREATE PROCEDURE p(IN a INT) BEGIN...END;       │
+-- │ Trigger               │ CREATE TRIGGER t BEFORE UPDATE ON tbl FOR...;   │
+-- │ Transaction           │ START TRANSACTION; ... COMMIT/ROLLBACK;          │
+-- │ Index                 │ CREATE INDEX idx ON t(col);                      │
+-- │ Explain               │ EXPLAIN ANALYZE SELECT ...;                      │
+-- │ Optimistic lock       │ UPDATE t SET v=v+1 WHERE id=? AND version=?;    │
+-- └───────────────────────┴──────────────────────────────────────────────────┘
