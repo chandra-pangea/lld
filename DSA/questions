@@ -1,71 +1,273 @@
-1. Write a function to reverse a string (without using built-in reverse).DONE
-2. Write a function to check if a string is a palindrome.(DONE)
-3. Given an array of numbers, return a new array with duplicates removed (unique values only).(DONE)
-4. Given two arrays, write a function to return their intersection (common elements).(DONE)
-5. Given an array and a target sum, find two numbers whose sum equals the target (two-sum problem).(DONE)
-6. Write a function to flatten a nested array of arbitrary depth (e.g. [1, [2, [3,4], 5], 6] → [1,2,3,4,5,6]).(DONE)
-7. Implement a deep-clone (deep copy) for JS objects/arrays (without using JSON parse/stringify).(DONE)
-8. Given a string, return the first non-repeated character.
-9. Given two strings, write a function to check if they are anagrams of each other.
-10. Given a large array of numbers, write a function to return the most frequent element.
-11. Write a “debounce” utility function in JS.
-12. Write a “throttle” utility function in JS.
-13. Implement your own version of Promise.all (simple version).
-14. Implement your own version of Promise.race.
-15. Write a polyfill for Array.prototype.map.
-16. Write a function that shallow-merges two objects (without using Object.assign).
-17. Given a string with parentheses/brackets/braces, write a function to check if they’re balanced/valid.
-18. Given a singly linked list (or array simulating it), write a function to reverse it.
-19. Given a linked list, detect if there is a cycle.
-20. Merge two sorted linked lists into one sorted list.
-21. Given a linked list, return the n-th node from the end.
-22. Given a binary tree (represented with JS objects), implement inorder, preorder, postorder traversals.
-23. Given a graph (adjacency list representation), implement Depth-First Search (DFS) and Breadth-First Search (BFS).
-24. Given an array of intervals (objects with start and end), merge overlapping intervals.
-25. Given a sorted array and a target value, implement binary search (return index or −1).
-26. Given an array of integers, find a subarray with maximum sum (Kadane’s algorithm).
-27. Given two sorted arrays, merge them into one sorted array (with O(n + m) complexity).
-28. Given a string/array, find all substrings (or subarrays) — or for strings, find all substrings that are palindromes.
-29. Given an array of words (strings), group them by anagrams (return array of arrays where each subarray is group of anagrams).
-30. Write a function to rotate an array by k steps to the right (or left).
-31. Given a 2D matrix, print its elements in spiral order.
-32. Given a 2D matrix, transpose it (rows ↔ columns).
-33. Given a matrix and a word, check if the word exists in the matrix (word-search problem).
-34. Given an array, find the kth smallest / largest element (without sorting entire array) — using heap / quick-select.
-35. Given an array of integers, return product of array except self (without using division).
-36. Given an array, find a “container with most water” — max area formed by two lines (two-pointer).
-37. Implement sorting algorithms in JS: QuickSort, MergeSort, HeapSort, etc.
-38. Given a problem requiring dynamic programming — e.g. compute nth Fibonacci number (with memoization), or other DP-based subset sum / knapsack variations.
-39. Given a string, find the longest substring without repeating characters.
-40. Find the longest common prefix among an array of strings.
-41. Given a sorted array that’s rotated by some pivot, find a target value (search in rotated sorted array).
-42. Given a histogram (array of bar heights), find largest rectangle area (stack + array problem).
-43. Given an expression string (with brackets, operations), parse and evaluate it (infix → postfix → evaluate, or directly using stack).
-44. Given two strings, find the edit distance (Levenshtein distance) — string / DP challenge.
-45. Given an array / list of intervals, find if any intervals overlap (overlap detection).
-46. Given a binary tree, check if it’s height-balanced (difference between left subtree height and right subtree height ≤ 1 for all nodes).
-47. Given a binary search tree (BST), implement insertion and search operations.
-48. Given a binary tree, find its maximum depth and minimum depth.
-49. Given a graph, detect cycle (directed or undirected).
-50. Given a graph, find connected components (or strongly connected components) / check bipartiteness / check if graph is a tree.
-51. Given a grid (2D matrix), find the shortest path (BFS) between two points.
-52. Given a matrix representing a maze (0 = empty, 1 = wall), find if a path exists from start to end (Maze pathfinding via BFS/DFS).
-53. Write a function for “subset sum” — given array and sum, find if there’s a subset of numbers that sums to given value.
-54. Implement a “least recently used (LRU) cache” with get/put operations — using Map / linked list / hash-map.
-55. Given two strings, find longest common subsequence (LCS).
-56. Given a string, find all palindromic substrings (or count them).
-57. Given an array, find subarrays with a given sum (or find count of subarrays with given sum).
-58. Given an array, find longest subarray with sum divisible by k (or find longest such subarray).
-59. Given a string (or array), implement run-length encoding (compress repeated chars), or decompress.
-60. Given a string, check if it’s a rotation of another string.
-61. Given a string, find the smallest window (substring) containing all characters of another string (sliding-window).
-62. Given an array, find the “peak” element (greater than neighbors), or find local maxima/minima.
-63. Given a sequence, find the longest increasing subsequence (LIS).
-64. Given a list of tasks with start and end times, find maximum number of non-overlapping tasks you can schedule (interval scheduling). 
-65. Given an array of stock prices (prices per day), find max profit you can get from one buy and one sell.
-66. Given an array of stock prices, find max profit with as many transactions as you like (buy-sell multiple times).
-67. Given two sorted arrays, find the median of combined sorted arrays (without fully merging).
+1️⃣ Arrays + Two Pointers (35 problems) ⭐⭐⭐⭐⭐
+1. Two Sum
+2. Best Time to Buy and Sell Stock
+3. Contains Duplicate
+4. Move Zeroes
+5. Remove Duplicates from Sorted Array
+6. Merge Sorted Array
+7. Intersection of Two Arrays
+8. Plus One
+9. Majority Element
+10. Missing Number
+11. Product of Array Except Self
+12. Maximum Subarray
+13. Maximum Product Subarray
+14. Rotate Array
+15. Container With Most Water
+16. 3Sum
+17. Subarray Sum Equals K
+18. Find the Duplicate Number
+19. Set Matrix Zeroes
+20. Sort Colors
+21. Next Permutation
+22. Search in Rotated Sorted Array
+23. Find Peak Element
+24. Longest Consecutive Sequence
+25. Kadane Variant – Circular Subarray
+26. Merge Intervals
+27. Insert Interval
+28. Non-overlapping Intervals
+29. Minimum Size Subarray Sum
+30. Continuous Subarray Sum
+31. K-diff Pairs in an Array
+32. Find All Duplicates in an Array
+33. Array Nesting
+34. Shortest Unsorted Continuous Subarray
+35. Partition Array Into Disjoint Intervals
 
+2️⃣ Strings + Sliding Window (30 problems) ⭐⭐⭐⭐⭐
 
+36. Valid Palindrome
+37. Valid Anagram
+38. Implement strStr()
+39. Reverse String
+40. First Unique Character in a String     
+41. Longest Common Prefix
+42. Isomorphic Strings
+43. Word Pattern
+44. Longest Substring Without Repeating Characters
+45. Longest Repeating Character Replacement
+46. Minimum Window Substring
+47. Group Anagrams
+48. Count Palindromic Substrings
+49. Longest Palindromic Substring
+50. Find All Anagrams in a String
+51. String to Integer (atoi)
+52. Decode String
 
+53. Palindromic Substrings
+54. Zigzag Conversion
+55. Multiply Strings
+56. One Edit Distance
+57. Permutation in String
+58. Compare Version Numbers
+59. Reorganize String
+60. Encode and Decode Strings
+61. Word Break
+62. Simplify Path
+63. Remove All Adjacent Duplicates II
+64. Backspace String Compare
+65. Valid Parenthesis String
 
+3️⃣ Hashing (15 problems) ⭐⭐⭐⭐
+
+Two Sum
+
+Happy Number
+
+Isomorphic Strings
+
+Contains Duplicate II
+
+Subarray Sum Equals K
+
+Top K Frequent Elements
+
+Group Anagrams
+
+Longest Consecutive Sequence
+
+Design HashMap
+
+Design HashSet
+
+First Missing Positive
+
+Minimum Window Substring
+
+LRU Cache
+
+Random Pick with Weight
+
+Find Duplicate Subtrees
+
+4️⃣ Stack & Queue (20 problems) ⭐⭐⭐⭐
+
+Easy
+81. Valid Parentheses
+82. Implement Stack using Queues
+83. Implement Queue using Stacks
+84. Min Stack
+85. Backspace String Compare
+
+Medium
+86. Daily Temperatures
+87. Next Greater Element I
+88. Next Greater Element II
+89. Evaluate Reverse Polish Notation
+90. Decode String
+91. Simplify Path
+92. Asteroid Collision
+93. Remove Adjacent Duplicates
+94. Sliding Window Maximum
+95. Stock Span
+96. Basic Calculator
+97. Basic Calculator II
+98. Exclusive Time of Functions
+99. Online Stock Span
+100. Remove K Digits
+
+5️⃣ Linked List (20 problems) ⭐⭐⭐⭐
+
+Easy
+101. Reverse Linked List
+102. Merge Two Sorted Lists
+103. Middle of Linked List
+104. Detect Cycle
+105. Intersection of Two Linked Lists
+
+Medium
+106. Remove Nth Node from End
+107. Add Two Numbers
+108. Palindrome Linked List
+109. Odd Even Linked List
+110. Rotate List
+111. Reverse Linked List II
+112. Copy List with Random Pointer
+113. Linked List Cycle II
+114. Swap Nodes in Pairs
+115. Reorder List
+116. Partition List
+117. Sort List
+118. Flatten Multilevel Doubly Linked List
+119. Remove Zero Sum Consecutive Nodes
+120. Design Linked List
+
+6️⃣ Trees & BST (30 problems) ⭐⭐⭐⭐⭐
+
+Easy
+121. Maximum Depth of Binary Tree
+122. Invert Binary Tree
+123. Same Tree
+124. Symmetric Tree
+125. Path Sum
+
+Medium
+126. Binary Tree Level Order Traversal
+127. Lowest Common Ancestor
+128. Diameter of Binary Tree
+129. Balanced Binary Tree
+130. Validate BST
+131. Kth Smallest Element in BST
+132. Construct Binary Tree from Inorder & Preorder
+133. Serialize and Deserialize Binary Tree
+134. Binary Tree Right Side View
+135. Zigzag Level Order
+136. Sum Root to Leaf Numbers
+137. Path Sum II
+138. Binary Tree Maximum Path Sum
+139. Flatten Binary Tree to Linked List
+140. Count Complete Tree Nodes
+141. Convert Sorted Array to BST
+142. Recover BST
+143. Delete Node in a BST
+144. Binary Search Tree Iterator
+145. Vertical Order Traversal
+146. Boundary Traversal
+147. All Nodes Distance K
+
+7️⃣ Graphs (20 problems) ⭐⭐⭐⭐
+
+Easy
+148. DFS
+149. BFS
+150. Number of Islands
+151. Flood Fill
+
+Medium
+152. Clone Graph
+153. Course Schedule
+154. Course Schedule II
+155. Rotting Oranges
+156. Pacific Atlantic Water Flow
+157. Word Ladder
+158. Graph Valid Tree
+159. Number of Connected Components
+160. Shortest Path in Binary Matrix
+161. Keys and Rooms
+162. Network Delay Time
+163. Accounts Merge
+164. Is Graph Bipartite
+165. Detect Cycle in Directed Graph
+166. Surrounded Regions
+167. Minimum Height Trees
+
+8️⃣ Dynamic Programming (30 problems) ⭐⭐⭐⭐⭐
+
+Easy
+168. Climbing Stairs
+169. House Robber
+170. Maximum Subarray
+
+Medium
+171. House Robber II
+172. Coin Change
+173. Coin Change II
+174. Longest Increasing Subsequence
+175. Longest Common Subsequence
+176. Edit Distance
+177. Decode Ways
+178. Unique Paths
+179. Unique Paths II
+180. Minimum Path Sum
+181. Partition Equal Subset Sum
+182. Target Sum
+183. Perfect Squares
+184. Word Break
+185. Combination Sum IV
+186. Palindromic Substrings
+187. Maximum Product Subarray
+188. Jump Game
+189. Jump Game II
+190. Integer Break
+191. Count Bits
+192. Delete and Earn
+193. Paint House
+194. Rod Cutting
+195. 0/1 Knapsack
+196. Egg Dropping
+
+9️⃣ Greedy / Heap / Design (20 problems) ⭐⭐⭐⭐
+
+Easy
+197. Assign Cookies
+198. Lemonade Change
+
+Medium
+199. Gas Station
+200. Jump Game
+201. Task Scheduler
+202. Kth Largest Element
+203. Top K Frequent Elements
+204. Merge K Sorted Lists
+205. Meeting Rooms II
+206. Car Pooling
+207. LRU Cache
+208. LFU Cache
+209. Design Twitter
+210. Design Browser History
+211. Min Heap Implementation
+212. Median from Data Stream
+213. IPO
+214. Reorganize String
+215. Hand of Straights
