@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement standard graph traversal algorithms (Breadth-First Search and Depth-First Search).
+ */
+
 const graph = {
     A: ["B", "C"],
     B: ["D", "E"],

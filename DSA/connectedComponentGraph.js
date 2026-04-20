@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given n nodes and a list of undirected edges, find the number of connected components in the graph.
+ */
+
 // adjacency list
 const graph = {
     0: [1, 2],

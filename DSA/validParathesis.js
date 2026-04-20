@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a string `s` containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+ */
+
 function isValidBrackets(str) {
     const stack = [];
     const map = {

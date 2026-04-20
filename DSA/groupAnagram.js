@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an array of strings `strs`, group the anagrams together.
+ */
+
 function groupAnagrams(words) {
     const map = new Map();
 

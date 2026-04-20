@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a string `s` and an integer `k`, you can choose any character of the string and change it to any other uppercase English character at most `k` times. Return the length of the longest substring containing the same letter you can get.
+ */
+
 function longestSubstring(s) {
     let left = 0;
     let set = new Set();

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Remove duplicates from a sorted array or sorted linked list in-place.
+ */
+
 function removingDuplicate(arr) {
     let uniqueSet = new Set();
     arr.forEach(element => {

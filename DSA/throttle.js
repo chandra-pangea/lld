@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement a `throttle` utility function. It ensures that the given function is called at most once in a specified time period.
+ */
+
 function throttle(fn, delay) {
     let lastCall = 0;
     

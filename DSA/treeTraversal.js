@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement Binary Tree traversals: Pre-order, In-order, Post-order, and Level-order.
+ */
+
 const tree = {
     value: 1,
     left: {

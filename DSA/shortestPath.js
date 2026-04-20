@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Find the shortest path from a source node to a destination node in an unweighted/weighted graph.
+ */
+
 const grid = [
     [0, 0, 0, 1],
     [1, 0, 0, 0],

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a set of non-negative integers and a value `sum`, determine if there is a subset of the given set with sum equal to given `sum`.
+ */
+
 function subsetSum(arr, sum) {
     const n = arr.length;
   

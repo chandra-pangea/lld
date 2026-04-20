@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a graph and two vertexes, return true if there is a path from the first node to the second node using DFS.
+ */
+
 function hasPathDFS(maze, start, end) {
     const rows = maze.length;
     const cols = maze[0].length;

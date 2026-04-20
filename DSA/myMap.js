@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement a custom `Array.prototype.map` method or a basic Hash Map structure from scratch.
+ */
+
 
 Array.prototype.myMap = function (callback, thisArg) {
     if (typeof callback !== "function") {

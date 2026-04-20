@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Find the Kth smallest element in a given array or Binary Search Tree.
+ */
+
 function kthSmallest(arr, k) {
     let maxHeap = [];
 

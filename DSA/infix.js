@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Evaluate an infix mathematical expression or convert it to postfix notation.
+ */
+
 var calculate = function(s) {
     let values = [];   // stack for numbers
     let ops = [];      // stack for operators

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement a function to perform a shallow merge of two or more objects.
+ */
+
 function shallowMerge(obj1, obj2) {
     const result = {};
   

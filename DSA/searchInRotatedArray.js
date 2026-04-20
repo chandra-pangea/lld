@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * There is an integer array `nums` sorted in ascending order (with distinct values). It is rotated at an unknown pivot. Given the array `nums` and an integer `target`, return the index of `target` if it is in `nums`, or `-1` if it is not.
+ */
+
 var search = function(nums, target) {
     let left = 0;
     let right = nums.length - 1;

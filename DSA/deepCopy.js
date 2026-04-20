@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Write a deep clone function to make a deep copy of a highly nested object or array.
+ */
+
 function deepClone(obj) {
     if (obj === null || typeof obj !== 'object') return obj;
   

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Write a function that takes a deeply nested array and flattens it into a one-dimensional array.
+ */
+
 function flattenArray(ele) {
     if (Array.isArray(ele)) {
         for (let i = 0; i < ele.length; i++){

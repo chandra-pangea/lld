@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * You are given an integer array `height` of length n. Find two lines that together with the x-axis form a container such that the container contains the most water.
+ */
+
 function maxArea(height) {
     let left = 0;
     let right = height.length - 1;

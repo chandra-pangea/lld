@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an integer array `nums`, rotate the array to the right by `k` steps, where `k` is non-negative.
+ */
+
 function rotateLeft(arr, k) {
     k = k % arr.length;
     return arr.slice(k).concat(arr.slice(0, k));

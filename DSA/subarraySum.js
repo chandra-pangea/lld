@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an array of integers `nums` and an integer `k`, return the total number of continuous subarrays whose sum equals to `k`.
+ */
+
 function subarraySum(nums, k) {
     const map = new Map();
     map.set(0, 1); // base case

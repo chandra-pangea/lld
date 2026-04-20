@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Find the common elements present in given multiple sorted or unsorted arrays.
+ */
+
 function commonElement(arr1, arr2) {
     let arr1Element = new Set(arr1);
     let res = [];

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * You are given two integer arrays `nums1` and `nums2`, sorted in non-decreasing order. Merge `nums1` and `nums2` into a single array sorted in non-decreasing order.
+ */
+
 function mergeSortedArrays(arr1, arr2) {
     let i = 0, j = 0;
     const result = [];

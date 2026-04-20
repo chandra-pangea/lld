@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given two sorted arrays `nums1` and `nums2` of size `m` and `n` respectively, return the median of the two sorted arrays.
+ */
+
 function findMedianSortedArrays(nums1, nums2) {
     if (nums1.length > nums2.length) {
       return findMedianSortedArrays(nums2, nums1);

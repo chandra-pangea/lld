@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Calculate the maximum profit you can achieve (similar to Best Time to Buy and Sell Stock).
+ */
+
 function maxProfit(prices) {
     let profit = 0;
 

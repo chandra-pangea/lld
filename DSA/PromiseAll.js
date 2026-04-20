@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement a custom version of `Promise.all` that takes an array of promises and resolves when all resolve, or rejects if any rejects.
+ */
+
 function myPromiseAll(promises) {
     return new Promise((resolve, reject) => {
         let results = [];

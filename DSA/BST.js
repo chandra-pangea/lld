@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Binary Search Tree implementation and basic operations (insertion, traversal, etc.).
+ */
+
 class TreeNode {
     constructor(val) {
       this.val = val;

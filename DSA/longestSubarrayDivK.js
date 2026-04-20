@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an integer array `nums` and an integer `k`, return the length of the longest subarray whose sum is divisible by `k`.
+ */
+
 function longestSubarrayDivByK(arr, k) {
     const map = new Map(); // remainder -> first index
     let prefixSum = 0;

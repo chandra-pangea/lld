@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given two strings, find the length of their Longest Common Subsequence (LCS).
+ */
+
 function lcsLength(text1, text2) {
     const m = text1.length;
     const n = text2.length;

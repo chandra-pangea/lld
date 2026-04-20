@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an integer array `nums`, find the subarray with the largest sum, and return its sum (Kadane's Algorithm).
+ */
+
 function maxSubarraySum(arr) {
     let currentSum = arr[0];
     let maxSum = arr[0];

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Design a data structure that follows the constraints of a Least Recently Used (LRU) cache.
+ */
+
 class Node {
     constructor(key, value) {
       this.key = key;

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement Run-Length Encoding (RLE) to compress and decompress a given string.
+ */
+
 function compress(str) {
     if (str.length === 0) return "";
 

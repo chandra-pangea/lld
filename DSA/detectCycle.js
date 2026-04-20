@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a directed/undirected graph, determine if it contains any cycle. Additionally, find the cyclic path if required.
+ */
+
 // ---------------------------
 // Graph Class (Adjacency List)
 // ---------------------------

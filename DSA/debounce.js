@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implement a `debounce` function that limits the rate at which a provided function gets called. It delays execution until after `wait` milliseconds have elapsed since the last time it was invoked.
+ */
+
 function debounce(fn, delay) {
     let timer;
     return function (...args) {

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Convert a given string based on specific rules (e.g., snake_case to camelCase) or minimal edit distance.
+ */
+
 var minDistance = function(s, t) {
     const memo = new Map();
 

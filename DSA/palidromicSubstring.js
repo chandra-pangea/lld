@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a string `s`, return the longest palindromic substring in `s`.
+ */
+
 function allPalindromicSubstrings(str) {
     let result = [];
 

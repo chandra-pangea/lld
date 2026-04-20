@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Implementations of various sorting algorithms such as Quicksort, Mergesort, Bubble Sort, etc.
+ */
+
 // ============================================================================
 // 1. QUICK SORT (Divide & Conquer) — Average O(n log n), Worst O(n²)
 // ============================================================================

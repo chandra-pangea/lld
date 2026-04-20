@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a string s, return the number of palindromic substrings in it.
+ */
+
 function countSubstrings(s) {
     let count = 0;
     const n = s.length;

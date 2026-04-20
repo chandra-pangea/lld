@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given an `m x n` matrix, return all elements of the matrix in spiral order.
+ */
+
 function spiralOrder(matrix) {
     const result = [];
     if (!matrix.length) return result;

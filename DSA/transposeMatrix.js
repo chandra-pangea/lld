@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given a 2D integer array `matrix`, return the transpose of `matrix`.
+ */
+
 function transpose(matrix) {
     // Number of rows in the original matrix
     const rowCount = matrix.length;

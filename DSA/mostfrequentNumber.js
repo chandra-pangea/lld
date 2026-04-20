@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Find the element that appears most frequently in a given array.
+ */
+
 function mostFrequentNumber(arr) {
     const map = new Map();
     let max = 0;

@@ -1,3 +1,8 @@
+/**
+ * PROBLEM EXPLANATION:
+ * Given head, the head of a linked list, determine if the linked list has a cycle in it.
+ */
+
 class ListNode {
     constructor(value) {
       this.value = value;
